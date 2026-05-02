@@ -205,6 +205,12 @@ function makeDraggable(element: HTMLElement, handle: HTMLElement): void {
   let initialY = 0;
 
   const dragStart = (e: MouseEvent) => {
+    // Don't start dragging if clicking the close button
+    const target = e.target as HTMLElement;
+    if (target.classList.contains('elang-popup-close-button')) {
+      return;
+    }
+
     // Get initial mouse position
     initialX = e.clientX;
     initialY = e.clientY;
@@ -281,6 +287,17 @@ function createPopup(
   dragHandle.textContent = '⋮⋮';
   dragHandle.title = 'Drag to move';
   popup.appendChild(dragHandle);
+
+  // Close button
+  const closeButton = document.createElement('button');
+  closeButton.className = 'elang-popup-close-button';
+  closeButton.textContent = '×';
+  closeButton.title = 'Close';
+  closeButton.addEventListener('click', (e) => {
+    e.stopPropagation(); // Prevent drag from triggering
+    removePopup();
+  });
+  dragHandle.appendChild(closeButton);
 
   // Make popup draggable
   makeDraggable(popup, dragHandle);

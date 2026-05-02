@@ -1,10 +1,11 @@
 {
-  "name": "elang-ext",
+  "name": "pronunciation-helper",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite build --watch --mode development",
     "build": "tsc && vite build",
+    "build:zip": "npm run build && cd dist && zip -r ../pronunciation-helper.zip .",
     "type-check": "tsc --noEmit"
   },
   "devDependencies": {
