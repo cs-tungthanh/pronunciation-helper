@@ -20,6 +20,10 @@ Thumbs.db
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+
+# pnpm
+# pnpm-lock.yaml should be committed for reproducible builds
 
 # Extension package
 *.zip
