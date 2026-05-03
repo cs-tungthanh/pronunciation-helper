@@ -81,5 +81,5 @@ jobs:
 
       - name: Push changes
         run: |
-          git push origin main
+          git push origin master
           git push origin "v${{ steps.new_version.outputs.new_version }}"
