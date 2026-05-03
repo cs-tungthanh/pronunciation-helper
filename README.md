@@ -61,12 +61,12 @@ Pronunciation Helper is a Chrome extension designed for English language learner
 
 2. Install dependencies:
    ```bash
-   npm install
+   pnpm install
    ```
 
 3. Build the extension:
    ```bash
-   npm run build
+   pnpm run build
    ```
 
 4. Load in Chrome:
@@ -122,16 +122,24 @@ pronunciation-helper/
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Build for production
-npm run build
+pnpm run build
 
 # Build and watch for changes
-npm run dev
+pnpm run dev
 
 # Type check
-npm run type-check
+pnpm run type-check
+
+# Create distribution ZIP
+pnpm run build:zip
+
+# Version management (local)
+pnpm run version:patch  # 1.0.0 -> 1.0.1
+pnpm run version:minor  # 1.0.0 -> 1.1.0
+pnpm run version:major  # 1.0.0 -> 2.0.0
 ```
 
 ### Tech Stack
@@ -199,7 +207,56 @@ Load voices & create utterance
 Play audio via Web Speech API
 ```
 
-## Publishing to Chrome Web Store
+## CI/CD with GitHub Actions
+
+This project includes automated CI/CD pipelines for publishing to the Chrome Web Store.
+
+### GitHub Actions Workflows
+
+1. **Version Bumping** (`.github/workflows/bump-version.yml`)
+   - Manual trigger via GitHub Actions UI
+   - Automatically bumps version in manifest.json and package.json
+   - Creates git commit and tag
+   - Triggers publish workflow
+
+2. **Publish to Chrome Web Store** (`.github/workflows/publish.yml`)
+   - Triggered by version tags (v*)
+   - Builds the extension
+   - Runs type checking
+   - Creates distribution ZIP
+   - Publishes to Chrome Web Store
+   - Creates GitHub release
+
+### Setting Up CI/CD
+
+1. **Configure Chrome Web Store API** (see [docs/CHROME_STORE_SETUP.md](docs/CHROME_STORE_SETUP.md))
+   - Create Google Cloud project
+   - Enable Chrome Web Store API
+   - Generate OAuth credentials
+   - Get refresh token
+
+2. **Add GitHub Secrets**
+   Go to Settings → Secrets → Actions and add:
+   - `EXTENSION_ID` - Your extension's ID from Chrome Web Store
+   - `CLIENT_ID` - OAuth client ID
+   - `CLIENT_SECRET` - OAuth client secret
+   - `REFRESH_TOKEN` - OAuth refresh token
+
+3. **Deploy New Version**
+   ```bash
+   # Option 1: Use GitHub Actions UI
+   # Go to Actions → Bump Version → Run workflow
+   # Select version type (patch/minor/major)
+
+   # Option 2: Manual version and tag
+   pnpm run version:patch
+   git add .
+   git commit -m "chore: bump version to x.x.x"
+   git tag vx.x.x
+   git push && git push --tags
+   ```
+
+## Publishing to Chrome Web Store (Manual)
 
 ### Prerequisites
 
@@ -216,14 +273,13 @@ Play audio via Web Speech API
    # Add to src/icons/icon128.png
 
    # Rebuild with icon
-   npm run build
+   pnpm run build
    ```
 
 2. **Create Package**
    ```bash
-   cd dist
-   zip -r ../pronunciation-helper.zip .
-   cd ..
+   pnpm run build:zip
+   # This creates pronunciation-helper.zip
    ```
 
 3. **Upload to Chrome Web Store**
