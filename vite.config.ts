@@ -9,8 +9,14 @@ function copyExtensionFiles(): Plugin {
       // Copy manifest.json
       copyFileSync('manifest.json', 'dist/manifest.json')
 
-      // Copy CSS
-      copyFileSync('src/content/popup.css', 'dist/popup.css')
+      // Copy CSS files
+      copyFileSync('src/content/popup.css', 'dist/content-popup.css')
+      copyFileSync('src/options/options.css', 'dist/options.css')
+      copyFileSync('src/popup/popup.css', 'dist/popup.css')
+
+      // Copy HTML files
+      copyFileSync('src/options/options.html', 'dist/options.html')
+      copyFileSync('src/popup/popup.html', 'dist/popup.html')
 
       // Create icons directory
       mkdirSync('dist/icons', { recursive: true })
@@ -33,10 +39,12 @@ export default defineConfig({
     rollupOptions: {
       input: {
         content: resolve(__dirname, 'src/content/content.ts'),
+        options: resolve(__dirname, 'src/options/options.ts'),
+        popup: resolve(__dirname, 'src/popup/popup.ts'),
       },
       output: {
         entryFileNames: '[name].js',
-        format: 'iife',
+        format: 'es',
       },
     },
     outDir: 'dist',

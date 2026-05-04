@@ -5,6 +5,31 @@ let currentPopup: HTMLElement | null = null;
 let currentUtterance: SpeechSynthesisUtterance | null = null;
 let isPlaying = false;
 let voicesLoaded = false;
+let isActive = false;
+let mouseupHandler: ((event: MouseEvent) => void) | null = null;
+let mousedownHandler: ((event: MouseEvent) => void) | null = null;
+
+/**
+ * Normalize hostname by stripping www. prefix
+ */
+function getCurrentHostname(): string {
+  return window.location.hostname.replace(/^www\./, '');
+}
+
+/**
+ * Check if the extension is enabled on the current site
+ */
+async function isExtensionEnabled(): Promise<boolean> {
+  try {
+    const hostname = getCurrentHostname();
+    const result = await chrome.storage.local.get('disabledSites');
+    const disabledSites: string[] = result.disabledSites || [];
+    return !disabledSites.includes(hostname);
+  } catch (error) {
+    console.error('[Pronunciation Helper] Storage error:', error);
+    return true; // Fail open - enable by default
+  }
+}
 
 /**
  * Get the selected text from the page
@@ -633,17 +658,51 @@ async function ensureVoicesLoaded(): Promise<void> {
 }
 
 /**
+ * Cleanup function to remove all event listeners and UI
+ */
+function cleanup(): void {
+  console.log('[Pronunciation Helper] Cleaning up...');
+
+  // Remove popup if exists
+  removePopup();
+
+  // Remove event listeners
+  if (mouseupHandler) {
+    document.removeEventListener('mouseup', mouseupHandler);
+    mouseupHandler = null;
+  }
+
+  if (mousedownHandler) {
+    document.removeEventListener('mousedown', mousedownHandler);
+    mousedownHandler = null;
+  }
+
+  speechSynthesis.removeEventListener('voiceschanged', loadVoices);
+
+  isActive = false;
+  console.log('[Pronunciation Helper] Cleanup complete');
+}
+
+/**
  * Initialize the extension
  */
 async function init(): Promise<void> {
+  if (isActive) {
+    console.log('[Pronunciation Helper] Already active, skipping init');
+    return;
+  }
+
+  console.log('[Pronunciation Helper] Initializing...');
+  isActive = true;
+
   // Ensure voices are loaded
   await ensureVoicesLoaded();
 
   // Keep listening for voice changes
   speechSynthesis.addEventListener('voiceschanged', loadVoices);
 
-  // Listen for text selection
-  document.addEventListener('mouseup', (event) => {
+  // Create and store event handlers
+  mouseupHandler = (event: MouseEvent) => {
     // Don't trigger if clicking inside the popup
     if (currentPopup) {
       const target = event.target as HTMLElement;
@@ -654,11 +713,49 @@ async function init(): Promise<void> {
 
     // Small delay to ensure selection is complete
     setTimeout(showPopupForSelection, 10);
-  });
+  };
+
+  mousedownHandler = handleDocumentClick;
+
+  // Listen for text selection
+  document.addEventListener('mouseup', mouseupHandler);
 
   // Listen for clicks to dismiss popup
-  document.addEventListener('mousedown', handleDocumentClick);
+  document.addEventListener('mousedown', mousedownHandler);
+
+  console.log('[Pronunciation Helper] Initialization complete');
 }
 
-// Start the extension
-init();
+// Start the extension only if enabled on this site
+async function start() {
+  const enabled = await isExtensionEnabled();
+  if (!enabled) {
+    return; // Extension is disabled on this site
+  }
+  init();
+}
+
+// Listen for messages from popup/options to enable/disable immediately
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log('[Pronunciation Helper] Received message:', message);
+
+  if (message.action === 'disable') {
+    const hostname = getCurrentHostname();
+    if (message.hostname === hostname) {
+      console.log('[Pronunciation Helper] Disabling extension immediately');
+      cleanup();
+      sendResponse({ success: true });
+    }
+  } else if (message.action === 'enable') {
+    const hostname = getCurrentHostname();
+    if (message.hostname === hostname && !isActive) {
+      console.log('[Pronunciation Helper] Enabling extension immediately');
+      init();
+      sendResponse({ success: true });
+    }
+  }
+
+  return true; // Keep message channel open for async response
+});
+
+start();

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pronunciation Helper - Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>English Pronunciation Helper</h1>
+      <p class="subtitle">Settings</p>
+    </header>
+
+    <main>
+      <section class="current-site-section">
+        <h2>Current Site</h2>
+        <div class="current-site-info">
+          <div class="site-name" id="currentSite">Loading...</div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="enableToggle">
+            <span class="slider"></span>
+          </label>
+          <span class="toggle-label" id="toggleLabel">Enable on this site</span>
+        </div>
+        <p class="note">Reload the page for changes to take effect</p>
+      </section>
+
+      <section class="disabled-sites-section">
+        <h2>Disabled Sites</h2>
+        <div id="disabledSitesList" class="disabled-sites-list">
+          <p class="empty-message">No sites disabled yet</p>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script type="module" src="options.js"></script>
+</body>
+</html>

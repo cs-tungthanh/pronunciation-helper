@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pronunciation Helper</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <div class="header">
+      <h1>Pronunciation Helper</h1>
+    </div>
+
+    <div class="site-toggle">
+      <div class="site-info">
+        <div class="site-label">Current site:</div>
+        <div class="site-name" id="siteName">Loading...</div>
+      </div>
+
+      <div class="toggle-container">
+        <label class="toggle-switch">
+          <input type="checkbox" id="enableToggle">
+          <span class="slider"></span>
+        </label>
+        <span class="toggle-status" id="toggleStatus">Enabled</span>
+      </div>
+    </div>
+
+    <div class="footer">
+      <a href="#" id="openSettings" class="settings-link">Open Settings</a>
+    </div>
+  </div>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
