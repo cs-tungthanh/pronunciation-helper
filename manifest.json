@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "English Pronunciation Helper",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Select text to hear English pronunciation and see IPA notation",
   "permissions": [
     "activeTab",
