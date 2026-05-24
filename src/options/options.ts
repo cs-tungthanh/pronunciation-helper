@@ -1,3 +1,7 @@
+/**
+ * Extension options page for managing disabled sites
+ */
+
 import {
   getCurrentTabHostname,
   getDisabledSites,
@@ -5,95 +9,134 @@ import {
   toggleSite,
   removeSite
 } from '../shared/utils';
+import { getOptionalElement, escapeHtml, onDOMReady } from '../shared/dom-helpers';
+import { ERROR_MESSAGES, UI_LABELS } from '../constants/messages';
 
-// Render the current site section
-async function renderCurrentSite(): Promise<void> {
-  const currentSiteEl = document.getElementById('currentSite');
-  const enableToggle = document.getElementById('enableToggle') as HTMLInputElement;
-  const toggleLabel = document.getElementById('toggleLabel');
+/**
+ * DOM element references
+ */
+interface OptionsElements {
+  currentSite: HTMLElement | null;
+  enableToggle: HTMLInputElement | null;
+  toggleLabel: HTMLElement | null;
+  disabledSitesList: HTMLElement | null;
+}
 
-  if (!currentSiteEl || !enableToggle || !toggleLabel) return;
+/**
+ * Get DOM elements (all optional to handle partial templates)
+ */
+function getOptionsElements(): OptionsElements {
+  return {
+    currentSite: getOptionalElement<HTMLElement>('currentSite'),
+    enableToggle: getOptionalElement<HTMLInputElement>('enableToggle'),
+    toggleLabel: getOptionalElement<HTMLElement>('toggleLabel'),
+    disabledSitesList: getOptionalElement<HTMLElement>('disabledSitesList')
+  };
+}
+
+/**
+ * Render current site toggle section
+ */
+async function renderCurrentSite(elements: OptionsElements): Promise<void> {
+  if (!elements.currentSite || !elements.enableToggle || !elements.toggleLabel) {
+    return;
+  }
 
   const hostname = await getCurrentTabHostname();
 
   if (!hostname) {
-    currentSiteEl.textContent = 'Unable to detect current site';
-    enableToggle.disabled = true;
-    toggleLabel.textContent = 'Enable on this site';
+    elements.currentSite.textContent = ERROR_MESSAGES.UNABLE_TO_DETECT;
+    elements.enableToggle.disabled = true;
+    elements.toggleLabel.textContent = UI_LABELS.ENABLE_ON_SITE;
     return;
   }
 
-  currentSiteEl.textContent = hostname;
+  elements.currentSite.textContent = hostname;
 
   const disabledSites = await getDisabledSites();
   const enabled = isSiteEnabled(hostname, disabledSites);
 
-  enableToggle.checked = enabled;
-  enableToggle.disabled = false;
-  toggleLabel.textContent = enabled ? 'Enabled' : 'Disabled';
+  elements.enableToggle.checked = enabled;
+  elements.enableToggle.disabled = false;
+  elements.toggleLabel.textContent = enabled ? UI_LABELS.ENABLED : UI_LABELS.DISABLED;
 
-  // Add event listener for toggle
-  enableToggle.addEventListener('change', async () => {
-    const newState = enableToggle.checked;
+  // Setup toggle listener
+  elements.enableToggle.addEventListener('change', async () => {
+    const newState = elements.enableToggle!.checked;
     await toggleSite(hostname, newState);
-    toggleLabel.textContent = newState ? 'Enabled' : 'Disabled';
-    await renderDisabledSites(); // Refresh the list
+    elements.toggleLabel!.textContent = newState ? UI_LABELS.ENABLED : UI_LABELS.DISABLED;
+    await renderDisabledSites(elements);
   });
 }
 
-// Render the disabled sites list
-async function renderDisabledSites(): Promise<void> {
-  const listEl = document.getElementById('disabledSitesList');
-  if (!listEl) return;
-
-  const disabledSites = await getDisabledSites();
-
-  if (disabledSites.length === 0) {
-    listEl.innerHTML = '<p class="empty-message">No sites disabled yet</p>';
-    return;
-  }
-
-  // Sort alphabetically
-  disabledSites.sort();
-
-  listEl.innerHTML = disabledSites.map(site => `
+/**
+ * Create a single site list item
+ */
+function createSiteItem(site: string, onRemove: () => void): string {
+  const escapedSite = escapeHtml(site);
+  return `
     <div class="site-item">
-      <span class="site-name">${escapeHtml(site)}</span>
-      <button class="remove-btn" data-site="${escapeHtml(site)}">Remove</button>
+      <span class="site-name">${escapedSite}</span>
+      <button class="remove-btn" data-site="${escapedSite}">Remove</button>
     </div>
-  `).join('');
+  `;
+}
 
-  // Add event listeners to remove buttons
-  const removeButtons = listEl.querySelectorAll('.remove-btn');
+/**
+ * Setup remove button event listeners
+ */
+function setupRemoveButtons(
+  listElement: HTMLElement,
+  elements: OptionsElements
+): void {
+  const removeButtons = listElement.querySelectorAll<HTMLButtonElement>('.remove-btn');
+
   removeButtons.forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      const target = e.target as HTMLButtonElement;
-      const site = target.getAttribute('data-site');
+    btn.addEventListener('click', async () => {
+      const site = btn.getAttribute('data-site');
       if (site) {
         await removeSite(site);
-        await renderDisabledSites();
-        await renderCurrentSite(); // Refresh current site toggle if it matches
+        await renderDisabledSites(elements);
+        await renderCurrentSite(elements);
       }
     });
   });
 }
 
-// Escape HTML to prevent XSS
-function escapeHtml(text: string): string {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
+/**
+ * Render disabled sites list
+ */
+async function renderDisabledSites(elements: OptionsElements): Promise<void> {
+  if (!elements.disabledSitesList) {
+    return;
+  }
+
+  const disabledSites = await getDisabledSites();
+
+  if (disabledSites.length === 0) {
+    elements.disabledSitesList.innerHTML = `<p class="empty-message">${ERROR_MESSAGES.NO_SITES_DISABLED}</p>`;
+    return;
+  }
+
+  // Sort and render
+  const sortedSites = [...disabledSites].sort();
+  elements.disabledSitesList.innerHTML = sortedSites
+    .map(site => createSiteItem(site, () => removeSite(site)))
+    .join('');
+
+  setupRemoveButtons(elements.disabledSitesList, elements);
 }
 
-// Initialize the options page
+/**
+ * Initialize options page
+ */
 async function initOptions(): Promise<void> {
-  await renderCurrentSite();
-  await renderDisabledSites();
+  const elements = getOptionsElements();
+  await Promise.all([
+    renderCurrentSite(elements),
+    renderDisabledSites(elements)
+  ]);
 }
 
-// Run initialization when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initOptions);
-} else {
-  initOptions();
-}
+// Initialize when DOM is ready
+onDOMReady(initOptions);

@@ -1,98 +1,149 @@
+/**
+ * Browser extension popup UI
+ */
+
 import {
   getCurrentTabHostname,
   getDisabledSites,
   isSiteEnabled,
   toggleSite
 } from '../shared/utils';
+import { getRequiredElement, onDOMReady } from '../shared/dom-helpers';
+import { ERROR_MESSAGES, UI_LABELS } from '../constants/messages';
 
-// Initialize the popup
-async function initPopup(): Promise<void> {
-  console.log('[Pronunciation Helper] Initializing popup...');
+/**
+ * DOM element references
+ */
+interface PopupElements {
+  siteName: HTMLElement;
+  enableToggle: HTMLInputElement;
+  toggleStatus: HTMLElement;
+  openSettings: HTMLElement | null;
+}
 
-  const siteNameEl = document.getElementById('siteName');
-  const enableToggle = document.getElementById('enableToggle') as HTMLInputElement;
-  const toggleStatus = document.getElementById('toggleStatus');
-  const openSettingsBtn = document.getElementById('openSettings');
+/**
+ * Get and validate DOM elements
+ */
+function getPopupElements(): PopupElements {
+  return {
+    siteName: getRequiredElement<HTMLElement>('siteName'),
+    enableToggle: getRequiredElement<HTMLInputElement>('enableToggle'),
+    toggleStatus: getRequiredElement<HTMLElement>('toggleStatus'),
+    openSettings: document.getElementById('openSettings')
+  };
+}
 
-  if (!siteNameEl || !enableToggle || !toggleStatus) {
-    console.error('[Pronunciation Helper] Missing DOM elements');
-    return;
+/**
+ * Update UI to show loading state
+ */
+function setLoadingState(elements: PopupElements): void {
+  elements.enableToggle.disabled = true;
+  elements.siteName.textContent = ERROR_MESSAGES.LOADING;
+}
+
+/**
+ * Update UI to show error state
+ */
+function setErrorState(elements: PopupElements): void {
+  elements.siteName.textContent = ERROR_MESSAGES.ERROR_LOADING;
+  elements.toggleStatus.textContent = ERROR_MESSAGES.ERROR_STATUS;
+  elements.toggleStatus.className = 'toggle-status disabled';
+}
+
+/**
+ * Update UI to show internal page state (chrome://, edge://, etc.)
+ */
+function setInternalPageState(elements: PopupElements): void {
+  elements.siteName.textContent = ERROR_MESSAGES.BROWSER_INTERNAL_PAGE;
+  elements.toggleStatus.textContent = ERROR_MESSAGES.NOT_AVAILABLE;
+  elements.toggleStatus.className = 'toggle-status disabled';
+}
+
+/**
+ * Update toggle status display
+ */
+function updateToggleStatus(elements: PopupElements, enabled: boolean): void {
+  elements.toggleStatus.textContent = enabled ? UI_LABELS.ENABLED : UI_LABELS.DISABLED;
+  elements.toggleStatus.className = enabled ? 'toggle-status enabled' : 'toggle-status disabled';
+}
+
+/**
+ * Send message to content script for immediate effect
+ */
+async function notifyContentScript(hostname: string, enabled: boolean): Promise<void> {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    if (tab?.id) {
+      const action = enabled ? 'enable' : 'disable';
+      await chrome.tabs.sendMessage(tab.id, { action, hostname });
+    }
+  } catch (error) {
+    // Content script might not be loaded yet, which is fine
+    console.debug('Failed to notify content script:', error);
   }
+}
 
-  // Set initial state
-  enableToggle.disabled = true;
-  siteNameEl.textContent = 'Loading...';
+/**
+ * Setup toggle event listener
+ */
+function setupToggleListener(elements: PopupElements, hostname: string): void {
+  elements.enableToggle.addEventListener('change', async () => {
+    const newState = elements.enableToggle.checked;
+
+    await toggleSite(hostname, newState);
+    updateToggleStatus(elements, newState);
+    await notifyContentScript(hostname, newState);
+  });
+}
+
+/**
+ * Setup settings button
+ */
+function setupSettingsButton(openSettings: HTMLElement): void {
+  openSettings.addEventListener('click', (e) => {
+    e.preventDefault();
+    chrome.runtime.openOptionsPage();
+  });
+}
+
+/**
+ * Initialize popup UI
+ */
+async function initPopup(): Promise<void> {
+  const elements = getPopupElements();
+  setLoadingState(elements);
 
   try {
-    // Get current hostname
     const hostname = await getCurrentTabHostname();
-    console.log('[Pronunciation Helper] Got hostname:', hostname);
 
+    // Handle special cases
     if (!hostname) {
-      siteNameEl.textContent = 'Browser internal page';
-      toggleStatus.textContent = 'N/A';
-      toggleStatus.className = 'toggle-status disabled';
+      setInternalPageState(elements);
       return;
     }
 
-    siteNameEl.textContent = hostname;
+    // Set hostname
+    elements.siteName.textContent = hostname;
 
-    // Get current state
+    // Get and display enabled state
     const disabledSites = await getDisabledSites();
-    console.log('[Pronunciation Helper] Disabled sites:', disabledSites);
-
     const enabled = isSiteEnabled(hostname, disabledSites);
-    console.log('[Pronunciation Helper] Site enabled:', enabled);
 
-    // Update UI
-    enableToggle.disabled = false;
-    enableToggle.checked = enabled;
-    toggleStatus.textContent = enabled ? 'Enabled' : 'Disabled';
-    toggleStatus.className = enabled ? 'toggle-status enabled' : 'toggle-status disabled';
+    elements.enableToggle.disabled = false;
+    elements.enableToggle.checked = enabled;
+    updateToggleStatus(elements, enabled);
 
-    // Add toggle event listener
-    enableToggle.addEventListener('change', async () => {
-      const newState = enableToggle.checked;
-      console.log('[Pronunciation Helper] Toggling to:', newState);
+    // Setup event listeners
+    setupToggleListener(elements, hostname);
 
-      // Save to storage
-      await toggleSite(hostname, newState);
-
-      // Update UI
-      toggleStatus.textContent = newState ? 'Enabled' : 'Disabled';
-      toggleStatus.className = newState ? 'toggle-status enabled' : 'toggle-status disabled';
-
-      // Send message to content script for immediate effect
-      try {
-        const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-        if (tab?.id) {
-          const action = newState ? 'enable' : 'disable';
-          console.log('[Pronunciation Helper] Sending message to tab:', tab.id, action);
-          await chrome.tabs.sendMessage(tab.id, { action, hostname });
-        }
-      } catch (error) {
-        console.error('[Pronunciation Helper] Failed to send message to content script:', error);
-      }
-    });
+    if (elements.openSettings) {
+      setupSettingsButton(elements.openSettings);
+    }
   } catch (error) {
-    console.error('[Pronunciation Helper] Error during initialization:', error);
-    siteNameEl.textContent = 'Error loading';
-    toggleStatus.textContent = 'Error';
-    toggleStatus.className = 'toggle-status disabled';
-  }
-
-  // Add settings link handler
-  if (openSettingsBtn) {
-    openSettingsBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      chrome.runtime.openOptionsPage();
-    });
+    console.error('Error during popup initialization:', error);
+    setErrorState(elements);
   }
 }
 
-// Run initialization when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initPopup);
-} else {
-  initPopup();
-}
+// Initialize when DOM is ready
+onDOMReady(initPopup);
