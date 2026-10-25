@@ -1,6 +1,6 @@
 {
   "name": "pronunciation-helper",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "type": "module",
   "scripts": {
     "dev": "vite build --watch --mode development & vite build -c vite.config.content.ts --watch --mode development",
