@@ -1,6 +1,8 @@
 /**
- * Shared utility functions for site management
+ * Shared utility functions for site management and settings
  */
+
+import { DEFAULT_TARGET_LANGUAGE } from '../constants/app-constants';
 
 /**
  * Normalize hostname by stripping www. prefix
@@ -108,4 +110,30 @@ export async function removeSite(hostname: string): Promise<void> {
   const disabledSites = await getDisabledSites();
   const filtered = disabledSites.filter(site => site !== hostname);
   await saveDisabledSites(filtered);
+}
+
+/**
+ * Get the translation target language from storage
+ * @returns Language code, or TRANSLATION_OFF when translation is disabled
+ */
+export async function getTargetLanguage(): Promise<string> {
+  try {
+    const result = await chrome.storage.local.get('targetLanguage');
+    return result.targetLanguage || DEFAULT_TARGET_LANGUAGE;
+  } catch (error) {
+    console.error('[Pronunciation Helper] Failed to read storage:', error);
+    return DEFAULT_TARGET_LANGUAGE;
+  }
+}
+
+/**
+ * Save the translation target language to storage
+ * @param language - Language code, or TRANSLATION_OFF to disable translation
+ */
+export async function saveTargetLanguage(language: string): Promise<void> {
+  try {
+    await chrome.storage.local.set({ targetLanguage: language });
+  } catch (error) {
+    console.error('[Pronunciation Helper] Failed to save to storage:', error);
+  }
 }

@@ -17,6 +17,7 @@ function copyExtensionFiles(): Plugin {
       // Copy HTML files
       copyFileSync('src/options/options.html', 'dist/options.html')
       copyFileSync('src/popup/popup.html', 'dist/popup.html')
+      copyFileSync('src/offscreen/offscreen.html', 'dist/offscreen.html')
 
       // Create icons directory
       mkdirSync('dist/icons', { recursive: true })
@@ -34,13 +35,16 @@ function copyExtensionFiles(): Plugin {
   }
 }
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
+      // The content script is built separately (vite.config.content.ts): content scripts
+      // can't use `import`, so it must not share chunks with these entries
       input: {
-        content: resolve(__dirname, 'src/content/content.ts'),
+        background: resolve(__dirname, 'src/background/background.ts'),
         options: resolve(__dirname, 'src/options/options.ts'),
         popup: resolve(__dirname, 'src/popup/popup.ts'),
+        offscreen: resolve(__dirname, 'src/offscreen/offscreen.ts'),
       },
       output: {
         entryFileNames: '[name].js',
@@ -48,7 +52,8 @@ export default defineConfig({
       },
     },
     outDir: 'dist',
-    emptyOutDir: true,
+    // In watch mode the content-script watcher writes to dist concurrently; emptying it would delete content.js
+    emptyOutDir: mode !== 'development',
   },
   plugins: [copyExtensionFiles()],
-})
+}))

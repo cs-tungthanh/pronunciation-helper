@@ -35,3 +35,6 @@ pnpm-debug.log*
 # Environment
 .env
 .env.local
+
+# Edge dev profile (scripts/dev-edge.sh)
+.edge-dev-profile/

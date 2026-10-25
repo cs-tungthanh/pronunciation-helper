@@ -2,8 +2,7 @@
  * Main content script - orchestrates pronunciation helper functionality
  */
 
-import { fetchIPABatch } from '../api/dictionary-api';
-import { extractWords } from '../text/text-processor';
+import { requestTranslation } from '../api/translation-client';
 import { speechService } from '../speech/speech-service';
 import { createPopup } from '../ui/popup-builder';
 import { popupManager } from '../ui/popup-manager';
@@ -31,6 +30,13 @@ function getCurrentHostname(): string {
 }
 
 /**
+ * Whether this script still belongs to the loaded extension (false once it is reloaded or removed)
+ */
+function isExtensionContextValid(): boolean {
+  return Boolean(chrome.runtime?.id);
+}
+
+/**
  * Check if extension is enabled on current site
  */
 async function isExtensionEnabled(): Promise<boolean> {
@@ -48,7 +54,7 @@ async function isExtensionEnabled(): Promise<boolean> {
 /**
  * Show popup for selected text with IPA and speech controls
  */
-async function showPopupForSelection(): Promise<void> {
+function showPopupForSelection(): void {
   const selectedText = getSelectedText();
   if (!selectedText) return;
 
@@ -62,22 +68,16 @@ async function showPopupForSelection(): Promise<void> {
   const position = getSelectionPosition();
   if (!position) return;
 
-  // Check for speech support
-  const error = speechService.getSupportError();
+  // Show the popup right away; the translation fills in when it arrives
+  const popup = createPopup(selectedText, () => popupManager.removePopup());
+  popupManager.showPopup(popup.element, position);
 
-  // Fetch IPA for all words
-  const words = extractWords(selectedText);
-  const ipaData = await fetchIPABatch(words);
+  // A newer selection may have replaced this popup before a request returned
+  const isStillShown = () => popupManager.getCurrentPopup() === popup.element;
 
-  // Create and show popup
-  const popup = createPopup(
-    selectedText,
-    error,
-    ipaData,
-    () => popupManager.removePopup()
-  );
-
-  popupManager.showPopup(popup, position);
+  requestTranslation(selectedText).then((translation) => {
+    if (isStillShown()) popup.setTranslation(translation);
+  });
 }
 
 /**
@@ -89,6 +89,15 @@ function handleDocumentClick(event: MouseEvent): void {
 
   const target = event.target as HTMLElement;
   if (!currentPopup.contains(target)) {
+    popupManager.removePopup();
+  }
+}
+
+/**
+ * Handle Escape to dismiss
+ */
+function handleKeydown(event: KeyboardEvent): void {
+  if (event.key === 'Escape' && popupManager.hasPopup()) {
     popupManager.removePopup();
   }
 }
@@ -111,6 +120,8 @@ function cleanup(): void {
     mousedownHandler = null;
   }
 
+  document.removeEventListener('keydown', handleKeydown);
+
   isActive = false;
   console.log(`${LOG_PREFIX} Cleanup complete`);
 }
@@ -132,6 +143,12 @@ async function init(): Promise<void> {
 
   // Create event handlers
   mouseupHandler = (event: MouseEvent) => {
+    // After the extension reloads, this script is orphaned while a fresh copy runs; step aside
+    if (!isExtensionContextValid()) {
+      cleanup();
+      return;
+    }
+
     const currentPopup = popupManager.getCurrentPopup();
     if (currentPopup && currentPopup.contains(event.target as HTMLElement)) {
       return; // Clicked inside popup
@@ -145,6 +162,7 @@ async function init(): Promise<void> {
   // Register event listeners
   document.addEventListener('mouseup', mouseupHandler);
   document.addEventListener('mousedown', mousedownHandler);
+  document.addEventListener('keydown', handleKeydown);
 
   console.log(`${LOG_PREFIX} Initialization complete`);
 }

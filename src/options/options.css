@@ -198,3 +198,24 @@ input:disabled + .slider {
 .remove-btn:active {
   transform: scale(0.98);
 }
+
+/* Translation Section */
+.language-field {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+  font-size: 16px;
+  color: #2c3e50;
+}
+
+.language-select {
+  flex: 1;
+  max-width: 300px;
+  padding: 8px 12px;
+  font-size: 16px;
+  border: 1px solid #bdc3c7;
+  border-radius: 4px;
+  background: white;
+  color: #2c3e50;
+}

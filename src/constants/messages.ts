@@ -3,9 +3,6 @@
  */
 
 export const ERROR_MESSAGES = {
-  SPEECH_NOT_SUPPORTED: 'Speech synthesis not supported in this browser',
-  NO_EN_US_VOICE: 'No en-US voice available',
-  NO_VOICES_AVAILABLE: 'Loading...',
   STORAGE_ERROR: 'Storage error',
   BROWSER_INTERNAL_PAGE: 'Browser internal page',
   LOADING: 'Loading...',
@@ -17,16 +14,19 @@ export const ERROR_MESSAGES = {
 } as const;
 
 export const UI_LABELS = {
-  PLAY: 'Play',
-  VOICING: 'Voicing',
-  LOADING: 'Loading...',
-  DRAG_HANDLE: '⋮⋮',
-  CLOSE_BUTTON: 'x',
+  PLAY_TOOLTIP: 'Hear the whole selection',
+  STOP_TOOLTIP: 'Stop',
   ENABLED: 'Enabled',
   DISABLED: 'Disabled',
   DRAG_TOOLTIP: 'Drag to move',
-  CLOSE_TOOLTIP: 'Close',
+  CLOSE_TOOLTIP: 'Close (Esc)',
+  PLAY_WORD_TOOLTIP: 'Hear this word',
+  DICTIONARY_TOOLTIP: 'Open in Dictionary.com',
+  WORD_TOOLTIP: 'Click for pronunciation',
+  LOOKING_UP: 'Looking up…',
+  NO_IPA: 'No IPA found',
   ENABLE_ON_SITE: 'Enable on this site',
+  TRANSLATION_OFF: 'Off (no translation)',
 } as const;
 
 export const LOG_PREFIX = '[Pronunciation Helper]';

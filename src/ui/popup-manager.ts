@@ -2,7 +2,7 @@
  * Manage popup lifecycle, positioning, and state
  */
 
-import { POPUP_POSITION_OFFSET_PX, POPUP_EDGE_MARGIN_PX } from '../constants/app-constants';
+import { POPUP_CSS_CLASS, POPUP_POSITION_OFFSET_PX, POPUP_EDGE_MARGIN_PX } from '../constants/app-constants';
 import { speechService } from '../speech/speech-service';
 
 /**
@@ -49,6 +49,10 @@ class PopupManager {
    */
   showPopup(popup: HTMLElement, position: { x: number; y: number }): void {
     this.removePopup();
+
+    // Also clear popups left by another copy of this script (e.g. one orphaned by an extension reload)
+    document.querySelectorAll(`.${POPUP_CSS_CLASS}`).forEach((stale) => stale.remove());
+
     this.positionPopup(popup, position);
     this.currentPopup = popup;
   }

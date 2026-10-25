@@ -7,10 +7,14 @@ import {
   getDisabledSites,
   isSiteEnabled,
   toggleSite,
-  removeSite
+  removeSite,
+  getTargetLanguage,
+  saveTargetLanguage
 } from '../shared/utils';
 import { getOptionalElement, escapeHtml, onDOMReady } from '../shared/dom-helpers';
 import { ERROR_MESSAGES, UI_LABELS } from '../constants/messages';
+import { TRANSLATION_OFF } from '../constants/app-constants';
+import { TARGET_LANGUAGES } from '../constants/languages';
 
 /**
  * DOM element references
@@ -20,6 +24,7 @@ interface OptionsElements {
   enableToggle: HTMLInputElement | null;
   toggleLabel: HTMLElement | null;
   disabledSitesList: HTMLElement | null;
+  targetLanguage: HTMLSelectElement | null;
 }
 
 /**
@@ -30,8 +35,29 @@ function getOptionsElements(): OptionsElements {
     currentSite: getOptionalElement<HTMLElement>('currentSite'),
     enableToggle: getOptionalElement<HTMLInputElement>('enableToggle'),
     toggleLabel: getOptionalElement<HTMLElement>('toggleLabel'),
-    disabledSitesList: getOptionalElement<HTMLElement>('disabledSitesList')
+    disabledSitesList: getOptionalElement<HTMLElement>('disabledSitesList'),
+    targetLanguage: getOptionalElement<HTMLSelectElement>('targetLanguage')
   };
+}
+
+/**
+ * Render translation target language selector
+ */
+async function renderTargetLanguage(elements: OptionsElements): Promise<void> {
+  const select = elements.targetLanguage;
+  if (!select) {
+    return;
+  }
+
+  const options = [{ code: TRANSLATION_OFF, name: UI_LABELS.TRANSLATION_OFF }, ...TARGET_LANGUAGES];
+  options.forEach(({ code, name }) => {
+    select.appendChild(new Option(name, code));
+  });
+
+  select.value = await getTargetLanguage();
+
+  // Content scripts read the setting on every selection, so no reload is needed
+  select.addEventListener('change', () => saveTargetLanguage(select.value));
 }
 
 /**
@@ -134,7 +160,8 @@ async function initOptions(): Promise<void> {
   const elements = getOptionsElements();
   await Promise.all([
     renderCurrentSite(elements),
-    renderDisabledSites(elements)
+    renderDisabledSites(elements),
+    renderTargetLanguage(elements)
   ]);
 }
 
