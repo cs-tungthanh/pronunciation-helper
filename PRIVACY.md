@@ -1,6 +1,6 @@
 # Privacy Policy for English Pronunciation Helper
 
-**Last Updated: May 3, 2026**
+**Last Updated: October 25, 2026**
 
 ## Overview
 
@@ -12,14 +12,15 @@ English Pronunciation Helper is a Chrome extension that helps users learn Englis
 
 ## How the Extension Works
 
-The extension operates entirely on your local device:
+The extension runs in your browser and only contacts the services listed under Third-Party Services:
 
 1. **Text Selection**: When you select text on a webpage, the extension processes it locally in your browser
-2. **IPA Notation**: The extension fetches phonetic data from the Free Dictionary API (dictionaryapi.dev) using only the selected words - no user information is sent
-3. **Text-to-Speech**: Uses your browser's built-in speech synthesis - no external services
-4. **No Tracking**: We don't track your usage, selections, or browsing activity
-5. **No Analytics**: We don't use any analytics services
-6. **No Cookies**: We don't set or read any cookies
+2. **IPA Notation**: The extension fetches phonetic data from the Free Dictionary API (dictionaryapi.dev) for the word you click (or the single word you select) - no user information is sent
+3. **Translation** (optional): Translation is on by default (Vietnamese). The selected text is sent to Google Translate, or to MyMemory if Google fails, to translate it. Turn translation off in Settings to stop this
+4. **Text-to-Speech**: When you press play, the text being spoken is sent to Google Translate's text-to-speech service to get the audio. If that fails, your browser's built-in speech synthesis is used instead, which runs locally
+5. **No Tracking**: We don't track your usage, selections, or browsing activity
+6. **No Analytics**: We don't use any analytics services
+7. **No Cookies**: We don't set or read any cookies
 
 ## Permissions Used
 
@@ -27,7 +28,8 @@ The extension requires certain permissions to function:
 
 - **activeTab**: To detect text selection on the current webpage
 - **scripting**: To inject the pronunciation popup interface
-- **Host permissions**: To work on any website you visit
+- **offscreen**: To play pronunciation audio in a hidden extension page, so websites can't block it
+- **Host permissions**: To work on any website you visit, to reach translate.googleapis.com and api.mymemory.translated.net for translation, and translate.google.com for pronunciation audio
 
 These permissions are used solely to provide the pronunciation functionality and are not used to collect any data.
 
@@ -38,10 +40,16 @@ The extension makes requests to:
   - Only the word itself is sent
   - No user information or identifiers are included
   - This is a public API that doesn't require authentication
+- **Google Translate** (translate.googleapis.com): To translate selected text, only when translation is on
+  - Only the selected text and target language are sent, without cookies
+- **MyMemory** (api.mymemory.translated.net): Fallback translation when Google fails, only when translation is on
+  - Only the selected text and target language are sent, without cookies
+- **Google Translate text-to-speech** (translate.google.com): To play pronunciation audio, only when you press play
+  - Only the text being spoken is sent
 
 ## Data Storage
 
-- **No Local Storage**: The extension doesn't store any data on your device
+- **Local Settings Only**: The extension stores your settings (disabled sites, translation language) in your browser's extension storage
 - **No Cloud Storage**: We don't have any servers or cloud storage
 - **No Caching**: Previous lookups are not saved or cached
 

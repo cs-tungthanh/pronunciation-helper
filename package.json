@@ -3,8 +3,9 @@
   "version": "1.0.2",
   "type": "module",
   "scripts": {
-    "dev": "vite build --watch --mode development",
-    "build": "tsc && vite build",
+    "dev": "vite build --watch --mode development & vite build -c vite.config.content.ts --watch --mode development",
+    "dev:edge": "bash scripts/dev-edge.sh",
+    "build": "tsc && vite build && vite build -c vite.config.content.ts",
     "build:zip": "pnpm run build && cd dist && zip -r ../pronunciation-helper.zip .",
     "type-check": "tsc --noEmit",
     "version:patch": "node scripts/bump-version.js patch",
@@ -14,6 +15,10 @@
   "devDependencies": {
     "@types/chrome": "^0.0.268",
     "typescript": "^5.4.5",
-    "vite": "^5.2.11"
+    "vite": "^5.2.11",
+    "web-ext": "^10.8.0"
+  },
+  "dependencies": {
+    "lucide": "^1.61.0"
   }
 }

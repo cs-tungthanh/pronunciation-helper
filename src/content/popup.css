@@ -22,6 +22,17 @@
   max-height: calc(80vh - 20px);
 }
 
+/* Lucide SVG icons; clicks go to the button, not the svg */
+.elang-icon {
+  display: block;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.elang-popup-drag-handle .elang-icon {
+  margin: 0 auto;
+}
+
 .elang-popup-drag-handle {
   background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
   border-bottom: 1px solid #dee2e6;
@@ -30,8 +41,7 @@
   cursor: move;
   user-select: none;
   font-size: 10px;
-  color: #6c757d;
-  letter-spacing: 2px;
+  color: #9aa0a6;
   border-radius: 8px 8px 0 0;
   position: relative;
 }
@@ -50,12 +60,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-  line-height: 20px;
   padding: 0;
   transition: all 0.2s;
-  font-weight: normal;
-  font-family: Arial, sans-serif;
 }
 
 .elang-popup-close-button:hover {
@@ -108,6 +114,88 @@
   border-radius: 4px;
 }
 
+.elang-popup-word {
+  cursor: pointer;
+  border-radius: 3px;
+  border-bottom: 1px dotted #9aa0a6;
+  transition: background 0.15s;
+}
+
+.elang-popup-word:hover {
+  background: #e8f0fe;
+  border-bottom-color: #1a73e8;
+}
+
+.elang-popup-word:focus-visible {
+  outline: 2px solid #1a73e8;
+  outline-offset: 1px;
+}
+
+.elang-popup-word.elang-popup-word-active {
+  background: #d2e3fc;
+  border-bottom-color: #1a73e8;
+}
+
+/* Small bubble with one word's IPA, anchored under the clicked word */
+.elang-popup-word-bubble {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 12px);
+  padding: 6px 6px 6px 10px;
+  background: white;
+  border: 1px solid #d2e3fc;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  white-space: nowrap;
+}
+
+.elang-popup-word-bubble[hidden] {
+  display: none;
+}
+
+.elang-popup-word-bubble-word {
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+}
+
+.elang-popup-word-bubble-ipa {
+  font-family: 'Lucida Sans Unicode', 'Arial Unicode MS', sans-serif;
+  font-size: 14px;
+  color: #1a73e8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.elang-popup-word-bubble-ipa.elang-popup-word-bubble-pending {
+  color: #9aa0a6;
+  font-size: 12px;
+}
+
+.elang-popup-word-bubble-speak,
+.elang-popup-word-bubble-link {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: #e8f0fe;
+  color: #1a73e8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.elang-popup-word-bubble-speak:hover,
+.elang-popup-word-bubble-link:hover {
+  background: #d2e3fc;
+}
+
 .elang-popup-text::-webkit-scrollbar {
   width: 6px;
 }
@@ -126,61 +214,107 @@
   background: #aaa;
 }
 
-.elang-popup-ipa-container {
-  margin-bottom: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  max-height: 100px;
+.elang-popup-translation {
+  margin-bottom: 8px;
+  color: #333;
+  word-wrap: break-word;
+  font-size: 14px;
+  max-height: 180px;
   overflow-y: auto;
-  padding: 4px;
-  border: 1px solid #e8f0fe;
-  border-radius: 4px;
-}
-
-/* Scrollbar for IPA container */
-.elang-popup-ipa-container::-webkit-scrollbar {
-  width: 6px;
-}
-
-.elang-popup-ipa-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-.elang-popup-ipa-container::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 3px;
-}
-
-.elang-popup-ipa-container::-webkit-scrollbar-thumb:hover {
-  background: #aaa;
-}
-
-.elang-popup-ipa-item {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  background: #e8f0fe;
-  border-radius: 4px;
   padding: 4px 8px;
-  gap: 1px;
-  min-width: 60px;
+  border-left: 3px solid #1a73e8;
+  background: #f1f6fe;
+  border-radius: 0 4px 4px 0;
 }
 
-.elang-popup-ipa-word {
-  font-size: 11px;
-  font-weight: 600;
-  color: #555;
-  text-transform: lowercase;
-  line-height: 1.2;
-}
-
-.elang-popup-ipa-text {
-  font-family: 'Lucida Sans Unicode', 'Arial Unicode MS', sans-serif;
+.elang-popup-dictionary {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 10px;
+  row-gap: 2px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #d2e3fc;
   font-size: 13px;
+}
+
+.elang-popup-dictionary-pos {
+  font-style: italic;
+  color: #80868b;
+}
+
+.elang-popup-dictionary-meanings {
+  color: #333;
+}
+
+/* Single selected word: word and IPA, then play and dictionary buttons */
+.elang-popup-word-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.elang-popup-word-header-details {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  column-gap: 10px;
+  min-width: 0;
+}
+
+.elang-popup-word-header-word {
+  font-size: 15px;
+  font-weight: 500;
+  color: #333;
+  word-break: break-word;
+}
+
+.elang-popup-word-header-ipa {
+  font-family: 'Lucida Sans Unicode', 'Arial Unicode MS', sans-serif;
+  font-size: 14px;
   color: #1a73e8;
-  line-height: 1.2;
+}
+
+.elang-popup-word-header-ipa.elang-popup-word-bubble-pending {
+  color: #9aa0a6;
+  font-size: 12px;
+}
+
+.elang-popup-source {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.elang-popup-source .elang-popup-text {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+/* Loading placeholders shown until IPA and translation arrive */
+.elang-popup-skeleton {
+  margin-bottom: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #eef1f5 25%, #f6f8fa 50%, #eef1f5 75%);
+  background-size: 200% 100%;
+  animation: elang-shimmer 1.2s linear infinite;
+}
+
+.elang-popup-skeleton-translation {
+  height: 24px;
+  width: 75%;
+}
+
+@keyframes elang-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
 }
 
 .elang-popup-warning {
@@ -189,38 +323,28 @@
   margin-bottom: 8px;
 }
 
-.elang-popup-error {
-  font-size: 12px;
-  color: #d32f2f;
-  margin-bottom: 8px;
-}
-
 .elang-play-button {
-  background: #1a73e8;
-  color: white;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   border: none;
-  border-radius: 4px;
-  padding: 8px 16px;
+  border-radius: 50%;
+  background: #e8f0fe;
+  color: #1a73e8;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 6px;
-  transition: background 0.2s;
+  justify-content: center;
+  transition: background 0.15s;
 }
 
 .elang-play-button:hover {
-  background: #1557b0;
+  background: #d2e3fc;
 }
 
 .elang-play-button:disabled {
-  background: #ccc;
   cursor: not-allowed;
-  opacity: 0.8;
-}
-
-.elang-play-button:disabled::before {
   animation: pulse 1.5s ease-in-out infinite;
 }
 
@@ -233,7 +357,7 @@
   }
 }
 
-.elang-play-button::before {
-  content: '▶';
-  font-size: 12px;
+.elang-play-button.elang-play-button-playing {
+  background: #d2e3fc;
+  box-shadow: 0 0 0 2px #a8c7fa;
 }
