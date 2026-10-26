@@ -9,11 +9,13 @@ import {
   toggleSite,
   removeSite,
   getTargetLanguage,
-  saveTargetLanguage
+  saveTargetLanguage,
+  getPopupMode,
+  savePopupMode
 } from '../shared/utils';
 import { getOptionalElement, onDOMReady } from '../shared/dom-helpers';
 import { ERROR_MESSAGES, UI_LABELS } from '../constants/messages';
-import { TRANSLATION_OFF } from '../constants/app-constants';
+import { TRANSLATION_OFF, POPUP_MODES, PopupMode } from '../constants/app-constants';
 import { TARGET_LANGUAGES } from '../constants/languages';
 
 /**
@@ -25,6 +27,7 @@ interface OptionsElements {
   toggleLabel: HTMLElement | null;
   disabledSitesList: HTMLElement | null;
   targetLanguage: HTMLSelectElement | null;
+  popupMode: HTMLSelectElement | null;
 }
 
 /**
@@ -36,7 +39,8 @@ function getOptionsElements(): OptionsElements {
     enableToggle: getOptionalElement<HTMLInputElement>('enableToggle'),
     toggleLabel: getOptionalElement<HTMLElement>('toggleLabel'),
     disabledSitesList: getOptionalElement<HTMLElement>('disabledSitesList'),
-    targetLanguage: getOptionalElement<HTMLSelectElement>('targetLanguage')
+    targetLanguage: getOptionalElement<HTMLSelectElement>('targetLanguage'),
+    popupMode: getOptionalElement<HTMLSelectElement>('popupMode')
   };
 }
 
@@ -58,6 +62,30 @@ async function renderTargetLanguage(elements: OptionsElements): Promise<void> {
 
   // Content scripts listen for storage changes, so no reload is needed
   select.addEventListener('change', () => saveTargetLanguage(select.value));
+}
+
+/**
+ * Render the selector for what happens when text is selected
+ */
+async function renderPopupMode(elements: OptionsElements): Promise<void> {
+  const select = elements.popupMode;
+  if (!select) {
+    return;
+  }
+
+  const options: { mode: PopupMode; name: string }[] = [
+    { mode: POPUP_MODES.IMMEDIATE, name: UI_LABELS.POPUP_MODE_IMMEDIATE },
+    { mode: POPUP_MODES.ICON, name: UI_LABELS.POPUP_MODE_ICON },
+    { mode: POPUP_MODES.NONE, name: UI_LABELS.POPUP_MODE_NONE }
+  ];
+  options.forEach(({ mode, name }) => {
+    select.appendChild(new Option(name, mode));
+  });
+
+  select.value = await getPopupMode();
+
+  // Content scripts listen for storage changes, so no reload is needed
+  select.addEventListener('change', () => savePopupMode(select.value as PopupMode));
 }
 
 /**
@@ -166,6 +194,7 @@ async function initOptions(): Promise<void> {
   setupCurrentSiteToggle(elements, hostname);
   await Promise.all([
     renderAll(elements, hostname),
+    renderPopupMode(elements),
     renderTargetLanguage(elements)
   ]);
 }

@@ -27,6 +27,10 @@ export const UI_LABELS = {
   NO_IPA: 'No IPA found',
   ENABLE_ON_SITE: 'Enable on this site',
   TRANSLATION_OFF: 'Off (no translation)',
+  TRIGGER_TOOLTIP: 'Show pronunciation',
+  POPUP_MODE_IMMEDIATE: 'Immediately display',
+  POPUP_MODE_ICON: 'Display icon',
+  POPUP_MODE_NONE: "Don't display",
 } as const;
 
 export const LOG_PREFIX = '[Sayly]';

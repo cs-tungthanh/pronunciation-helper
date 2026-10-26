@@ -3,15 +3,16 @@
  */
 
 import { requestTranslation } from '../api/translation-client';
-import { createPopup } from '../ui/popup-builder';
+import { createPopup, createTriggerIcon } from '../ui/popup-builder';
 import { popupManager } from '../ui/popup-manager';
 import {
   getSelectedText,
   getSelectionPosition,
   isSelectionInsideElement
 } from '../ui/selection-helper';
-import { normalizeHostname, getDisabledSites, isSiteEnabled } from '../shared/utils';
-import { SELECTION_DELAY_MS, CLICK_MAX_MOVE_PX, MESSAGE_ACTIONS } from '../constants/app-constants';
+import { normalizeHostname, getDisabledSites, isSiteEnabled, getPopupMode } from '../shared/utils';
+import { cachedSetting } from '../shared/settings-cache';
+import { SELECTION_DELAY_MS, CLICK_MAX_MOVE_PX, MESSAGE_ACTIONS, POPUP_MODES } from '../constants/app-constants';
 
 /**
  * Extension state
@@ -22,6 +23,8 @@ let mousedownHandler: ((event: MouseEvent) => void) | null = null;
 // Where the current press started, to tell a drag from a click
 let pressX = 0;
 let pressY = 0;
+
+const readPopupMode = cachedSetting('popupMode', getPopupMode);
 
 /**
  * Get current normalized hostname
@@ -45,13 +48,13 @@ async function isExtensionEnabled(): Promise<boolean> {
 }
 
 /**
- * Show popup for selected text with IPA and speech controls
+ * React to a new selection as the popup setting says: open the popup, show the icon, or do nothing
  */
-function showPopupForSelection(): void {
+async function handleSelection(): Promise<void> {
   const selectedText = getSelectedText();
   if (!selectedText) return;
 
-  // Don't show popup if selecting inside current popup
+  // Don't react to selecting inside current popup
   const currentPopup = popupManager.getCurrentPopup();
   if (currentPopup && isSelectionInsideElement(currentPopup)) {
     return;
@@ -61,6 +64,23 @@ function showPopupForSelection(): void {
   const position = getSelectionPosition();
   if (!position) return;
 
+  const mode = await readPopupMode();
+  if (mode === POPUP_MODES.NONE) return;
+
+  if (mode === POPUP_MODES.ICON) {
+    // Text and position are kept: clicking the icon may change the page's selection
+    const icon = createTriggerIcon(() => showPopup(selectedText, position));
+    popupManager.showPopup(icon, position);
+    return;
+  }
+
+  showPopup(selectedText, position);
+}
+
+/**
+ * Show popup for selected text with IPA and speech controls
+ */
+function showPopup(selectedText: string, position: { x: number; y: number }): void {
   // Show the popup right away; the translation fills in when it arrives
   const popup = createPopup(selectedText, () => popupManager.removePopup());
   popupManager.showPopup(popup.element, position);
@@ -151,7 +171,7 @@ function init(): void {
 
     if (!isSelectionGesture(event)) return;
 
-    setTimeout(showPopupForSelection, SELECTION_DELAY_MS);
+    setTimeout(handleSelection, SELECTION_DELAY_MS);
   };
 
   mousedownHandler = handleDocumentClick;

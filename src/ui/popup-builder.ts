@@ -6,6 +6,7 @@ import { requestWordIpa } from '../api/ipa-client';
 import type { DictionaryEntry, TranslationResult } from '../api/translate-api';
 import {
   POPUP_CSS_CLASS,
+  TRIGGER_ICON_CSS_CLASS,
   WORD_BUBBLE_GAP_PX,
   DICTIONARY_LOOKUP_URL
 } from '../constants/app-constants';
@@ -85,6 +86,24 @@ export function createPopup(text: string, onClose: () => void): PronunciationPop
       replaceSlot(translationSlot, translation ? createTranslationDisplay(translation) : null);
     }
   };
+}
+
+/**
+ * Create the small icon shown by a selection in "display icon" mode; clicking it opens the popup
+ */
+export function createTriggerIcon(onOpen: () => void): HTMLElement {
+  const button = document.createElement('button');
+  button.className = TRIGGER_ICON_CSS_CLASS;
+  setButtonIcon(button, ICONS.TRIGGER, 16, UI_LABELS.TRIGGER_TOOLTIP);
+
+  // Keep the page's selection and focus as they are while pressing the icon
+  button.addEventListener('mousedown', (e) => e.preventDefault());
+  button.addEventListener('click', (e) => {
+    e.stopPropagation();
+    onOpen();
+  });
+
+  return button;
 }
 
 /**

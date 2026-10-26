@@ -2,7 +2,7 @@
  * Shared utility functions for site management and settings
  */
 
-import { DEFAULT_TARGET_LANGUAGE } from '../constants/app-constants';
+import { DEFAULT_TARGET_LANGUAGE, DEFAULT_POPUP_MODE, POPUP_MODES, PopupMode } from '../constants/app-constants';
 import { LOG_PREFIX } from '../constants/messages';
 
 /**
@@ -155,6 +155,32 @@ export async function getTargetLanguage(): Promise<string> {
 export async function saveTargetLanguage(language: string): Promise<void> {
   try {
     await chrome.storage.local.set({ targetLanguage: language });
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to save to storage:`, error);
+  }
+}
+
+/**
+ * Get what happens when text is selected
+ * @returns The stored popup mode, or the default when unset or unknown
+ */
+export async function getPopupMode(): Promise<PopupMode> {
+  try {
+    const { popupMode } = await chrome.storage.local.get('popupMode');
+    const modes: readonly string[] = Object.values(POPUP_MODES);
+    return modes.includes(popupMode) ? popupMode : DEFAULT_POPUP_MODE;
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to read storage:`, error);
+    return DEFAULT_POPUP_MODE;
+  }
+}
+
+/**
+ * Save what happens when text is selected
+ */
+export async function savePopupMode(mode: PopupMode): Promise<void> {
+  try {
+    await chrome.storage.local.set({ popupMode: mode });
   } catch (error) {
     console.error(`${LOG_PREFIX} Failed to save to storage:`, error);
   }

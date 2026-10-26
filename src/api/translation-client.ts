@@ -6,21 +6,16 @@ import type { TranslationResult } from './translate-api';
 import { TRANSLATION_OFF, MESSAGE_ACTIONS } from '../constants/app-constants';
 import { LOG_PREFIX } from '../constants/messages';
 import { getTargetLanguage } from '../shared/utils';
+import { cachedSetting } from '../shared/settings-cache';
 
-// Read once, then kept current by storage change events instead of a storage read per selection
-let targetLanguage: Promise<string> | null = null;
-
-chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName === 'local' && 'targetLanguage' in changes) targetLanguage = null;
-});
+const readTargetLanguage = cachedSetting('targetLanguage', getTargetLanguage);
 
 /**
  * Translate text into the user's target language
  * @returns Translation (with dictionary entries for a single word), or null when translation is off or fails
  */
 export async function requestTranslation(text: string): Promise<TranslationResult | null> {
-  targetLanguage ??= getTargetLanguage();
-  const to = await targetLanguage;
+  const to = await readTargetLanguage();
   if (to === TRANSLATION_OFF) return null;
 
   try {

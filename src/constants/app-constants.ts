@@ -18,6 +18,18 @@ export const DICTIONARY_LOOKUP_URL = 'https://www.dictionary.com/browse/';
 export const TRANSLATION_OFF = 'off';
 export const DEFAULT_TARGET_LANGUAGE = 'vi';
 
+// What happens when text is selected
+export const POPUP_MODES = {
+  // Open the pronunciation popup right away
+  IMMEDIATE: 'immediate',
+  // Show a small icon by the selection; clicking it opens the popup
+  ICON: 'icon',
+  // Do nothing
+  NONE: 'none'
+} as const;
+export type PopupMode = typeof POPUP_MODES[keyof typeof POPUP_MODES];
+export const DEFAULT_POPUP_MODE: PopupMode = POPUP_MODES.IMMEDIATE;
+
 // Text-to-speech: Google Translate's voice (undocumented endpoint; tw-ob is the client it answers)
 export const GOOGLE_TTS_URL = 'https://translate.google.com/translate_tts';
 export const GOOGLE_TTS_CLIENT = 'tw-ob';
@@ -42,6 +54,7 @@ export const IPA_CACHE_SIZE = 500;
 
 // CSS Classes
 export const POPUP_CSS_CLASS = 'elang-pronunciation-popup';
+export const TRIGGER_ICON_CSS_CLASS = 'elang-trigger-icon';
 
 // UI Timing (milliseconds)
 export const SELECTION_DELAY_MS = 10;

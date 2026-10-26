@@ -20,6 +20,7 @@ Sayly is a Chrome extension designed for English language learners. Simply selec
 
 ### 🎨 User Experience
 - **Clean Interface** - Minimal, distraction-free popup design
+- **Popup Setting** - Choose in Settings whether selecting text opens the popup immediately, shows a small icon to click first, or does nothing
 - **Responsive Layout** - Scrollable content for long selections
 - **Visual Feedback** - Button states clearly show loading, playing, and ready states
 - **Click Prevention** - Smart detection prevents popup from reopening when interacting with it
