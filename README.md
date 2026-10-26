@@ -4,8 +4,11 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue?logo=google-chrome)
+[![Website](https://img.shields.io/badge/Website-try_the_demo-2e7d4f)](https://cs-tungthanh.github.io/cs-tungthanh/sayly/)
 
 Sayly is a browser extension for English learners. Highlight a word, a sentence or a whole paragraph and a small popup shows how each word is pronounced, plays it aloud, and translates it into your language.
+
+**[Try it on the Sayly website →](https://cs-tungthanh.github.io/cs-tungthanh/sayly/)**
 
 ![Sayly popup showing a word's IPA and translation](screenshots/sayly-1-word.png)
 
