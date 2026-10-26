@@ -1,385 +1,116 @@
 # Sayly – Pronunciation, IPA & Translate
 
-> A powerful Chrome extension that helps English language learners hear pronunciation and see IPA notation for any text on the web.
+> Select English text on any webpage to hear it spoken, see its IPA, and read a translation.
 
-[![Chrome Web Store](https://img.shields.io/badge/Chrome-Extension-blue?logo=google-chrome)](https://chrome.google.com/webstore)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue?logo=google-chrome)
 
-## Overview
+Sayly is a browser extension for English learners. Highlight a word, a sentence or a whole paragraph and a small popup shows how each word is pronounced, plays it aloud, and translates it into your language.
 
-Sayly is a Chrome extension designed for English language learners. Simply select any text on a webpage to instantly see IPA (International Phonetic Alphabet) notation and hear native American English pronunciation. Perfect for students, teachers, and anyone learning English!
+![Sayly popup showing a word's IPA and translation](screenshots/sayly-1-word.png)
 
 ## Features
 
-### 🎯 Core Features
-- **Instant Pronunciation** - Select any word, sentence, or paragraph to hear it spoken
-- **IPA Notation** - See phonetic transcription for each word using the International Phonetic Alphabet
-- **Smart Contractions** - Automatically expands contractions (doesn't → does + not) for better learning
-- **Draggable Popup** - Move the popup anywhere on screen to avoid blocking content
-- **No Length Limits** - Works with selections of any size, from single words to entire paragraphs
+- **Hear it** – play the whole selection or a single word, at 0.5× to 1.5× speed
+- **IPA for every word** – American English transcriptions from the bundled CMU Pronouncing Dictionary (~126,000 words), so most lookups never leave your browser
+- **Translate** – into 34 languages (Vietnamese by default), with meanings by part of speech when you select a single word
+- **Dictionary link** – open a word on Dictionary.com or Cambridge Dictionary
+- **Copy** – one click copies a word with its IPA, or a selection with its translation
+- **Your choice of trigger** – open the popup as soon as you select, show a small icon to click first, or turn it off
+- **Per-site switch** – turn Sayly off on sites where you don't want it
+- **Voices** – Microsoft's natural voice in Edge, Google's voice elsewhere, or any voice installed on your system
+- **Light and dark themes**, or follow the system
+- **Draggable popup** – move it out of the way; press Esc or click outside to close
 
-### 🎨 User Experience
-- **Clean Interface** - Minimal, distraction-free popup design
-- **Popup Setting** - Choose in Settings whether selecting text opens the popup immediately, shows a small icon to click first, or does nothing
-- **Responsive Layout** - Scrollable content for long selections
-- **Visual Feedback** - Button states clearly show loading, playing, and ready states
-- **Click Prevention** - Smart detection prevents popup from reopening when interacting with it
+| Sentence | Settings | Dark |
+|---|---|---|
+| ![Sentence](screenshots/sayly-2-sentence.png) | ![Settings](screenshots/sayly-3-settings.png) | ![Dark theme](screenshots/sayly-4-dark.png) |
 
-### 🔊 Audio Features
-- **American English** - High-quality en-US pronunciation using Web Speech API
-- **Replay Support** - Click "Voicing" to restart audio during playback
-- **Reliable Playback** - Works offline with browser's built-in voices
-- **Auto-cleanup** - Audio stops when popup is dismissed
+## Install
 
-### 📖 Learning Features
-- **Word-by-Word IPA** - Each word gets its own pronunciation card
-- **Compact Display** - Scrollable IPA container shows ~2 lines at a time
-- **Copy-Friendly** - Select and copy IPA text without triggering new popups
-- **Context Aware** - Won't create new popups when selecting text inside the current one
+Sayly is not in the Chrome Web Store yet. To install it from source:
 
-## Screenshots
+```bash
+git clone https://github.com/cs-tungthanh/pronunciation-helper.git
+cd pronunciation-helper
+pnpm install
+pnpm build
+```
 
-<!-- Add screenshots here -->
-![Popup with IPA](screenshots/popup-example.png)
-![Dragging the popup](screenshots/dragging.png)
+Then open `chrome://extensions` (or `edge://extensions`), turn on **Developer mode**, click **Load unpacked** and choose the `dist/` folder.
 
-## Installation
+## Usage
 
-### For Users (Chrome Web Store)
+1. Select text on any page. The popup opens next to it (or an icon appears, depending on your setting).
+2. Press play to hear the selection, or click a word to hear just that word and see its IPA.
+3. Drag the popup by its handle to move it. Press Esc or click outside to close.
 
-1. Visit the [Chrome Web Store](https://chrome.google.com/webstore) (link coming soon)
-2. Click "Add to Chrome"
-3. Grant necessary permissions
-4. Start selecting text on any webpage!
+Quick settings (trigger, speed, translation language, theme, on/off for the current site) are in the toolbar popup. **All settings** opens the full page, which adds the voice picker and the list of disabled sites.
 
-### For Developers (Local Installation)
+## Privacy
 
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/cs-tungthanh/pronunciation-helper.git
-   cd pronunciation-helper
-   ```
+Sayly collects no data and has no analytics. Pronunciation and IPA work locally for words in the bundled dictionary. These requests do leave your browser:
 
-2. Install dependencies:
-   ```bash
-   pnpm install
-   ```
+- Words missing from the dictionary go to the [Free Dictionary API](https://dictionaryapi.dev/).
+- Translated text goes to Google Translate, or MyMemory if Google fails. Set translation to **Off** to stop this.
+- Spoken text goes to Google's text-to-speech; if that fails, the browser's built-in voice is used.
 
-3. Build the extension:
-   ```bash
-   pnpm run build
-   ```
-
-4. Load in Chrome:
-   - Open `chrome://extensions/`
-   - Enable "Developer mode" (top right)
-   - Click "Load unpacked"
-   - Select the `dist/` directory
-
-## Usage Guide
-
-### Basic Usage
-
-1. **Select Text** - Highlight any text on a webpage
-2. **View Popup** - Popup appears automatically near your selection
-3. **See IPA** - Scroll through phonetic notations for each word
-4. **Play Audio** - Click the "Play" button to hear pronunciation
-5. **Move Popup** - Drag the top bar (⋮⋮) to reposition
-6. **Dismiss** - Click outside the popup to close it
-
-### Tips
-
-- **Long Selections**: Popup content scrolls automatically for long text
-- **Replay**: Click "Voicing" during playback to restart
-- **Copy IPA**: Select IPA text to copy without triggering new popup
-- **No Distraction**: Drag popup out of the way to see underlying content
+See [PRIVACY.md](PRIVACY.md) for the full policy.
 
 ## Development
 
-### Project Structure
-
-```
-pronunciation-helper/
-├── src/
-│   ├── content/
-│   │   ├── content.ts          # Main extension logic
-│   │   └── popup.css           # Popup styling
-│   └── icons/
-│       ├── icon.png            # Source icon (1024x1024)
-│       ├── icon16.png          # 16x16 icon
-│       ├── icon48.png          # 48x48 icon
-│       └── icon128.png         # 128x128 icon
-├── dist/                       # Built extension (gitignored)
-├── manifest.json               # Extension manifest (V3)
-├── package.json
-├── tsconfig.json
-├── vite.config.ts             # Build configuration
-├── CONTEXT.md                 # Domain glossary
-├── LICENSE                    # MIT License
-└── README.md
-```
-
-### Scripts
-
 ```bash
-# Install dependencies
-pnpm install
-
-# Build for production
-pnpm run build
-
-# Build and watch for changes
-pnpm run dev
-
-# Type check
-pnpm run type-check
-
-# Create distribution ZIP
-pnpm run build:zip
-
-# Version management (local)
-pnpm run version:patch  # 1.0.0 -> 1.0.1
-pnpm run version:minor  # 1.0.0 -> 1.1.0
-pnpm run version:major  # 1.0.0 -> 2.0.0
+pnpm dev           # build and rebuild on change into dist/
+pnpm dev:edge      # same, and run it in Microsoft Edge with auto-reload
+pnpm type-check    # TypeScript check
+pnpm build         # production build into dist/
+pnpm build:zip     # production build packed as sayly.zip
+pnpm cmudict       # regenerate src/data/cmudict-ipa.txt from the CMU dictionary
 ```
 
-### Tech Stack
+Built with TypeScript and Vite. The code lives in `src/`:
 
-- **TypeScript** - Type-safe development
-- **Vite** - Fast build tooling
-- **Web Speech API** - Browser-native text-to-speech
-- **CMU Pronouncing Dictionary** - Bundled IPA data, with the Free Dictionary API as a fallback
-- **Manifest V3** - Latest Chrome extension standard
+| Folder | What's there |
+|---|---|
+| `content/` | Content script injected into pages; listens for selections |
+| `ui/` | Popup building, dragging, selection handling |
+| `background/` | Service worker: IPA lookup, translation, caches |
+| `offscreen/` | Hidden page that plays Google TTS audio so sites can't block it |
+| `api/` | CMU dictionary, Free Dictionary API, Google Translate / MyMemory, Google TTS clients |
+| `speech/`, `text/` | Speech playback and text processing (contraction expansion etc.) |
+| `popup/`, `options/` | Toolbar popup and settings page |
+| `constants/`, `shared/` | Config values, UI strings, helpers |
 
-### Key Technologies
+[CONTEXT.md](CONTEXT.md) defines the terms used in the code, and [ARCHITECTURE.md](ARCHITECTURE.md) describes how the modules fit together.
 
-**Speech Synthesis**
-- Uses browser's built-in `speechSynthesis` API
-- Prefers Google en-US voices when available
-- Falls back to system voices
-- No external API calls for audio
+### How IPA is found
 
-**IPA Data**
-- Bundled [CMU Pronouncing Dictionary](https://github.com/cmusphinx/cmudict) (~126,000 words, American English), converted to IPA by `scripts/build-cmudict.js` (`pnpm cmudict` rebuilds `src/data/cmudict-ipa.txt`)
-- Inflected forms it doesn't list are worked out from the base word: -ed is /t/, /d/ or /ɪd/, -s is /s/, /z/ or /ɪz/, -ing is /ɪŋ/
-- Words still unknown fall back to the [Free Dictionary API](https://dictionaryapi.dev/)
-- Lookups are cached in the background worker
+1. Contractions are expanded first (*doesn't* → *does not*).
+2. Each word is looked up in the bundled CMU dictionary.
+3. Inflected forms it doesn't list are built from the base word: *-ed* → /t/, /d/ or /ɪd/; *-s* → /s/, /z/ or /ɪz/; *-ing* → /ɪŋ/.
+4. Anything still unknown falls back to the Free Dictionary API. Results are cached in the background worker.
 
-**Contraction Expansion**
-- 70+ common contractions supported
-- Case-insensitive matching
-- Improves IPA coverage for casual text
+## Releasing
 
-## Architecture
+Releases go through GitHub Actions:
 
-### Extension Components
+- **Release Extension** (manual) bumps the version (patch, minor or major), tags it, and optionally publishes to the Chrome Web Store.
+- **Bump Version** (manual) only bumps the version, commits and tags it.
+- **Publish to Chrome Web Store** runs on `v*` tags: type-checks, builds, uploads the ZIP and creates a GitHub release.
 
-1. **Content Script** (`content.ts`)
-   - Injected into all web pages
-   - Listens for text selection events
-   - Creates and manages popup
-   - Handles speech synthesis
+To bump locally instead, run `pnpm version:patch` (or `:minor` / `:major`), commit, tag `vX.Y.Z` and push the tag.
 
-2. **Popup UI** (`popup.css`)
-   - Draggable floating interface
-   - Responsive scrolling
-   - Visual states and feedback
-
-3. **Manifest** (`manifest.json`)
-   - Minimal permissions (`activeTab`, `scripting`)
-   - Content script injection
-   - Chrome extension metadata
-
-### Data Flow
-
-```
-User selects text
-    ↓
-Extract words & expand contractions
-    ↓
-Look up IPA (bundled dictionary, then Free Dictionary API)
-    ↓
-Create popup with IPA cards
-    ↓
-User clicks Play
-    ↓
-Load voices & create utterance
-    ↓
-Play audio via Web Speech API
-```
-
-## CI/CD with GitHub Actions
-
-This project includes automated CI/CD pipelines for publishing to the Chrome Web Store.
-
-### GitHub Actions Workflows
-
-1. **Version Bumping** (`.github/workflows/bump-version.yml`)
-   - Manual trigger via GitHub Actions UI
-   - Automatically bumps version in manifest.json and package.json
-   - Creates git commit and tag
-   - Triggers publish workflow
-
-2. **Publish to Chrome Web Store** (`.github/workflows/publish.yml`)
-   - Triggered by version tags (v*)
-   - Builds the extension
-   - Runs type checking
-   - Creates distribution ZIP
-   - Publishes to Chrome Web Store
-   - Creates GitHub release
-
-### Setting Up CI/CD
-
-1. **Configure Chrome Web Store API** (see [docs/CHROME_STORE_SETUP.md](docs/CHROME_STORE_SETUP.md))
-   - Create Google Cloud project
-   - Enable Chrome Web Store API
-   - Generate OAuth credentials
-   - Get refresh token
-
-2. **Add GitHub Secrets**
-   Go to Settings → Secrets → Actions and add:
-   - `EXTENSION_ID` - Your extension's ID from Chrome Web Store
-   - `CLIENT_ID` - OAuth client ID
-   - `CLIENT_SECRET` - OAuth client secret
-   - `REFRESH_TOKEN` - OAuth refresh token
-
-3. **Deploy New Version**
-   ```bash
-   # Option 1: Use GitHub Actions UI
-   # Go to Actions → Bump Version → Run workflow
-   # Select version type (patch/minor/major)
-
-   # Option 2: Manual version and tag
-   pnpm run version:patch
-   git add .
-   git commit -m "chore: bump version to x.x.x"
-   git tag vx.x.x
-   git push && git push --tags
-   ```
-
-## Publishing to Chrome Web Store (Manual)
-
-### Prerequisites
-
-1. **Developer Account** - $5 one-time registration fee
-2. **Extension Icon** - Create 128x128 PNG at `src/icons/icon128.png`
-3. **Screenshots** - At least one 1280x800 or 640x400 image
-4. **Privacy Policy** - Required if collecting data (this extension doesn't)
-
-### Publishing Steps
-
-1. **Prepare Assets**
-   ```bash
-   # Create icon (use your favorite tool)
-   # Add to src/icons/icon128.png
-
-   # Rebuild with icon
-   pnpm run build
-   ```
-
-2. **Create Package**
-   ```bash
-   pnpm run build:zip
-   # This creates sayly.zip
-   ```
-
-3. **Upload to Chrome Web Store**
-   - Go to [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole)
-   - Click "New Item"
-   - Upload `sayly.zip`
-   - Fill out store listing (see below)
-   - Submit for review
-
-### Store Listing Content
-
-**Description** (see below for suggested text)
-
-**Category**: Accessibility or Education
-
-**Language**: English
-
-**Privacy Practices**:
-- No data collection
-- No user data storage
-- No third-party sharing
+Setting up the Chrome Web Store credentials and GitHub secrets is covered in [docs/CICD_SETUP.md](docs/CICD_SETUP.md).
 
 ## Contributing
 
-Contributions are welcome! Here's how you can help:
-
-### Reporting Issues
-
-- Use the GitHub issue tracker
-- Include Chrome version
-- Provide steps to reproduce
-- Include console logs if applicable
-
-### Submitting Pull Requests
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Test thoroughly
-5. Commit with clear messages
-6. Push to your fork
-7. Open a Pull Request
-
-### Development Guidelines
-
-- Write TypeScript with strict type checking
-- Follow existing code style
-- Test on multiple websites
-- Update documentation
-- Keep commits atomic and well-described
-
-## Roadmap
-
-Future enhancements being considered:
-
-- [ ] British English pronunciation option
-- [ ] Keyboard shortcut to trigger popup
-- [ ] Settings page (accent, speed, voice selection)
-- [ ] Definition tooltips
-- [ ] Export/save pronunciations
-- [ ] Dark mode support
-- [ ] Multiple language support
-
-## FAQ
-
-**Q: Why doesn't it work for some words?**
-A: IPA comes from the bundled CMU Pronouncing Dictionary, which covers about 126,000 words and their -ed, -s and -ing forms. Very new words, slang and some names may be missing; for those the Free Dictionary API is tried.
-
-**Q: Can I use a different voice?**
-A: Currently uses the first available en-US voice. Future versions will add voice selection.
-
-**Q: Does it work offline?**
-A: IPA works offline for words in the bundled dictionary. Audio uses Google's voice online and falls back to browser voices offline. Translation needs an internet connection.
-
-**Q: Why does the button blink sometimes?**
-A: Voices may not be fully loaded. Wait a moment and try again, or refresh the page.
-
-**Q: Can I change the pronunciation speed?**
-A: Not currently. This feature may be added in a future update.
+Issues and pull requests are welcome. When reporting a bug, include your browser and version, the page where it happened, and steps to reproduce. Before opening a PR, run `pnpm type-check` and try the change on a few different sites.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+[MIT](LICENSE)
 
 ## Acknowledgments
 
-- [CMU Pronouncing Dictionary](https://github.com/cmusphinx/cmudict) for pronunciation data, Copyright (C) 1993-2015 Carnegie Mellon University; its license ships with the extension as `CMUDICT-LICENSE.txt`
-- [Free Dictionary API](https://dictionaryapi.dev/) for IPA phonetic data
-- [Web Speech API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API) for text-to-speech
-- All the language learners who inspired this project
-
-## Support
-
-If you find this extension helpful:
-- ⭐ Star this repository
-- 🐛 Report bugs and suggest features
-- 📢 Share with other English learners
-- ☕ [Buy me a coffee](https://buymeacoffee.com/yourname) (optional)
-
----
-
-**Made with ❤️ for English language learners worldwide**
+- [CMU Pronouncing Dictionary](https://github.com/cmusphinx/cmudict), Copyright (C) 1993-2015 Carnegie Mellon University. Its license ships with the extension as `CMUDICT-LICENSE.txt`.
+- [Free Dictionary API](https://dictionaryapi.dev/) for words outside the bundled dictionary.
