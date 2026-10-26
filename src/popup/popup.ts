@@ -1,16 +1,33 @@
 /**
- * Browser extension popup UI
+ * Browser extension popup UI: this site's on/off switch plus the settings that apply everywhere
  */
 
+import { AudioLines, EyeOff, MessageSquareText, Settings } from 'lucide';
+import type { IconNode } from 'lucide';
 import {
   getCurrentTabHostname,
   getDisabledSites,
   isSiteEnabled,
-  toggleSite
+  toggleSite,
+  getPopupMode,
+  savePopupMode,
+  getTargetLanguage,
+  saveTargetLanguage
 } from '../shared/utils';
 import { getRequiredElement, onDOMReady } from '../shared/dom-helpers';
+import { createIcon, setButtonIcon } from '../ui/icons';
 import { ERROR_MESSAGES, UI_LABELS } from '../constants/messages';
-import { MESSAGE_ACTIONS } from '../constants/app-constants';
+import { MESSAGE_ACTIONS, POPUP_MODES, PopupMode } from '../constants/app-constants';
+import { TRANSLATION_CHOICES } from '../constants/languages';
+
+/**
+ * The popup-mode choices, as shown in the segmented control
+ */
+const MODE_CHOICES: ReadonlyArray<{ mode: PopupMode; label: string; hint: string; icon: IconNode }> = [
+  { mode: POPUP_MODES.IMMEDIATE, label: UI_LABELS.MODE_IMMEDIATE_SHORT, hint: UI_LABELS.MODE_IMMEDIATE_HINT, icon: MessageSquareText },
+  { mode: POPUP_MODES.ICON, label: UI_LABELS.MODE_ICON_SHORT, hint: UI_LABELS.MODE_ICON_HINT, icon: AudioLines },
+  { mode: POPUP_MODES.NONE, label: UI_LABELS.MODE_NONE_SHORT, hint: UI_LABELS.MODE_NONE_HINT, icon: EyeOff }
+];
 
 /**
  * DOM element references
@@ -19,7 +36,10 @@ interface PopupElements {
   siteName: HTMLElement;
   enableToggle: HTMLInputElement;
   toggleStatus: HTMLElement;
-  openSettings: HTMLElement | null;
+  openSettings: HTMLButtonElement;
+  popupModes: HTMLElement;
+  popupModeHint: HTMLElement;
+  targetLanguage: HTMLSelectElement;
 }
 
 /**
@@ -30,42 +50,19 @@ function getPopupElements(): PopupElements {
     siteName: getRequiredElement<HTMLElement>('siteName'),
     enableToggle: getRequiredElement<HTMLInputElement>('enableToggle'),
     toggleStatus: getRequiredElement<HTMLElement>('toggleStatus'),
-    openSettings: document.getElementById('openSettings')
+    openSettings: getRequiredElement<HTMLButtonElement>('openSettings'),
+    popupModes: getRequiredElement<HTMLElement>('popupModes'),
+    popupModeHint: getRequiredElement<HTMLElement>('popupModeHint'),
+    targetLanguage: getRequiredElement<HTMLSelectElement>('targetLanguage')
   };
 }
 
 /**
- * Update UI to show loading state
- */
-function setLoadingState(elements: PopupElements): void {
-  elements.enableToggle.disabled = true;
-  elements.siteName.textContent = ERROR_MESSAGES.LOADING;
-}
-
-/**
- * Update UI to show error state
- */
-function setErrorState(elements: PopupElements): void {
-  elements.siteName.textContent = ERROR_MESSAGES.ERROR_LOADING;
-  elements.toggleStatus.textContent = ERROR_MESSAGES.ERROR_STATUS;
-  elements.toggleStatus.className = 'toggle-status disabled';
-}
-
-/**
- * Update UI to show internal page state (chrome://, edge://, etc.)
- */
-function setInternalPageState(elements: PopupElements): void {
-  elements.siteName.textContent = ERROR_MESSAGES.BROWSER_INTERNAL_PAGE;
-  elements.toggleStatus.textContent = ERROR_MESSAGES.NOT_AVAILABLE;
-  elements.toggleStatus.className = 'toggle-status disabled';
-}
-
-/**
- * Update toggle status display
+ * Update the status line under the site name
  */
 function updateToggleStatus(elements: PopupElements, enabled: boolean): void {
-  elements.toggleStatus.textContent = enabled ? UI_LABELS.ENABLED : UI_LABELS.DISABLED;
-  elements.toggleStatus.className = enabled ? 'toggle-status enabled' : 'toggle-status disabled';
+  elements.toggleStatus.textContent = enabled ? UI_LABELS.SITE_ON : UI_LABELS.SITE_OFF;
+  elements.toggleStatus.classList.toggle('is-on', enabled);
 }
 
 /**
@@ -85,26 +82,82 @@ async function notifyContentScript(hostname: string, enabled: boolean): Promise<
 }
 
 /**
- * Setup toggle event listener
+ * Show this site's on/off state and wire its switch
  */
-function setupToggleListener(elements: PopupElements, hostname: string): void {
+async function renderSite(elements: PopupElements): Promise<void> {
+  const hostname = await getCurrentTabHostname();
+
+  // Browser pages (chrome://, the Web Store, extension pages) don't run content scripts
+  if (!hostname) {
+    elements.siteName.textContent = UI_LABELS.BROWSER_PAGE;
+    elements.toggleStatus.textContent = UI_LABELS.BROWSER_PAGE_STATUS;
+    return;
+  }
+
+  elements.siteName.textContent = hostname;
+  elements.siteName.title = hostname;
+
+  const enabled = isSiteEnabled(hostname, await getDisabledSites());
+  elements.enableToggle.checked = enabled;
+  elements.enableToggle.disabled = false;
+  updateToggleStatus(elements, enabled);
+
   elements.enableToggle.addEventListener('change', async () => {
     const newState = elements.enableToggle.checked;
-
-    await toggleSite(hostname, newState);
     updateToggleStatus(elements, newState);
+    await toggleSite(hostname, newState);
     await notifyContentScript(hostname, newState);
   });
 }
 
 /**
- * Setup settings button
+ * Build the segmented control for what happens when text is selected
  */
-function setupSettingsButton(openSettings: HTMLElement): void {
-  openSettings.addEventListener('click', (e) => {
-    e.preventDefault();
-    chrome.runtime.openOptionsPage();
+async function renderPopupMode(elements: PopupElements): Promise<void> {
+  const current = await getPopupMode();
+
+  const showHint = (mode: PopupMode) => {
+    elements.popupModeHint.textContent = MODE_CHOICES.find(choice => choice.mode === mode)?.hint ?? '';
+  };
+
+  MODE_CHOICES.forEach(({ mode, label, icon }) => {
+    const segment = document.createElement('div');
+    segment.className = 'segment';
+
+    const input = document.createElement('input');
+    input.type = 'radio';
+    input.name = 'popupMode';
+    input.id = `popupMode-${mode}`;
+    input.value = mode;
+    input.checked = mode === current;
+    input.setAttribute('aria-describedby', 'popupModeHint');
+    input.addEventListener('change', () => {
+      showHint(mode);
+      savePopupMode(mode);
+    });
+
+    const labelElement = document.createElement('label');
+    labelElement.htmlFor = input.id;
+    labelElement.append(createIcon(icon, 18), label);
+
+    segment.append(input, labelElement);
+    elements.popupModes.appendChild(segment);
   });
+
+  showHint(current);
+}
+
+/**
+ * Fill the translation language picker
+ */
+async function renderTargetLanguage(elements: PopupElements): Promise<void> {
+  const select = elements.targetLanguage;
+  TRANSLATION_CHOICES.forEach(({ code, name }) => {
+    select.appendChild(new Option(name, code));
+  });
+
+  select.value = await getTargetLanguage();
+  select.addEventListener('change', () => saveTargetLanguage(select.value));
 }
 
 /**
@@ -112,37 +165,21 @@ function setupSettingsButton(openSettings: HTMLElement): void {
  */
 async function initPopup(): Promise<void> {
   const elements = getPopupElements();
-  setLoadingState(elements);
 
-  try {
-    const hostname = await getCurrentTabHostname();
+  setButtonIcon(elements.openSettings, Settings, 18, UI_LABELS.ALL_SETTINGS);
+  elements.openSettings.addEventListener('click', () => chrome.runtime.openOptionsPage());
 
-    // Handle special cases
-    if (!hostname) {
-      setInternalPageState(elements);
-      return;
-    }
+  // The global settings still work when this site can't be read
+  const results = await Promise.allSettled([
+    renderSite(elements),
+    renderPopupMode(elements),
+    renderTargetLanguage(elements)
+  ]);
 
-    // Set hostname
-    elements.siteName.textContent = hostname;
-
-    // Get and display enabled state
-    const disabledSites = await getDisabledSites();
-    const enabled = isSiteEnabled(hostname, disabledSites);
-
-    elements.enableToggle.disabled = false;
-    elements.enableToggle.checked = enabled;
-    updateToggleStatus(elements, enabled);
-
-    // Setup event listeners
-    setupToggleListener(elements, hostname);
-
-    if (elements.openSettings) {
-      setupSettingsButton(elements.openSettings);
-    }
-  } catch (error) {
-    console.error('Error during popup initialization:', error);
-    setErrorState(elements);
+  if (results[0].status === 'rejected') {
+    console.error('Error loading the current site:', results[0].reason);
+    elements.siteName.textContent = ERROR_MESSAGES.ERROR_LOADING;
+    elements.toggleStatus.textContent = '';
   }
 }
 

@@ -3,12 +3,7 @@
  */
 
 export const ERROR_MESSAGES = {
-  STORAGE_ERROR: 'Storage error',
-  BROWSER_INTERNAL_PAGE: 'Browser internal page',
-  LOADING: 'Loading...',
   ERROR_LOADING: 'Error loading',
-  ERROR_STATUS: 'Error',
-  NOT_AVAILABLE: 'N/A',
   UNABLE_TO_DETECT: 'Unable to detect current site',
   NO_SITES_DISABLED: 'No sites disabled yet',
 } as const;
@@ -31,6 +26,18 @@ export const UI_LABELS = {
   POPUP_MODE_IMMEDIATE: 'Immediately display',
   POPUP_MODE_ICON: 'Display icon',
   POPUP_MODE_NONE: "Don't display",
+  SITE_ON: 'On for this site',
+  SITE_OFF: 'Off for this site',
+  BROWSER_PAGE: 'Browser page',
+  BROWSER_PAGE_STATUS: "Sayly can't run on browser pages",
+  ALL_SETTINGS: 'All settings',
+  SELECTION_LEGEND: 'When you select text',
+  MODE_IMMEDIATE_SHORT: 'Popup',
+  MODE_ICON_SHORT: 'Icon',
+  MODE_NONE_SHORT: 'Off',
+  MODE_IMMEDIATE_HINT: 'The popup opens as soon as you select text.',
+  MODE_ICON_HINT: 'A small icon appears by the selection. Click it to open the popup.',
+  MODE_NONE_HINT: 'Nothing appears when you select text.',
 } as const;
 
 export const LOG_PREFIX = '[Sayly]';

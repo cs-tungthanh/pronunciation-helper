@@ -1,3 +1,6 @@
+import { TRANSLATION_OFF } from './app-constants';
+import { UI_LABELS } from './messages';
+
 /**
  * Target languages offered for translation (codes accepted by Google and MyMemory)
  */
@@ -34,4 +37,10 @@ export const TARGET_LANGUAGES: ReadonlyArray<{ code: string; name: string }> = [
   { code: 'uk', name: 'Ukrainian' },
   { code: 'ur', name: 'Urdu' },
   { code: 'vi', name: 'Vietnamese' },
+];
+
+/** Every choice for the translation setting: off, then the target languages */
+export const TRANSLATION_CHOICES: ReadonlyArray<{ code: string; name: string }> = [
+  { code: TRANSLATION_OFF, name: UI_LABELS.TRANSLATION_OFF },
+  ...TARGET_LANGUAGES
 ];

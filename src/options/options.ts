@@ -15,8 +15,8 @@ import {
 } from '../shared/utils';
 import { getOptionalElement, onDOMReady } from '../shared/dom-helpers';
 import { ERROR_MESSAGES, UI_LABELS } from '../constants/messages';
-import { TRANSLATION_OFF, POPUP_MODES, PopupMode } from '../constants/app-constants';
-import { TARGET_LANGUAGES } from '../constants/languages';
+import { POPUP_MODES, PopupMode } from '../constants/app-constants';
+import { TRANSLATION_CHOICES } from '../constants/languages';
 
 /**
  * DOM element references
@@ -53,8 +53,7 @@ async function renderTargetLanguage(elements: OptionsElements): Promise<void> {
     return;
   }
 
-  const options = [{ code: TRANSLATION_OFF, name: UI_LABELS.TRANSLATION_OFF }, ...TARGET_LANGUAGES];
-  options.forEach(({ code, name }) => {
+  TRANSLATION_CHOICES.forEach(({ code, name }) => {
     select.appendChild(new Option(name, code));
   });
 

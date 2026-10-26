@@ -7,30 +7,34 @@
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <div class="popup-container">
-    <div class="header">
-      <h1>Sayly</h1>
-    </div>
+  <header class="brand">
+    <img class="brand-mark" src="icons/icon48.png" alt="" width="32" height="32">
+    <p class="brand-name">Sayly <span class="brand-ipa" lang="und-fonipa">/ˈseɪ.li/</span></p>
+    <button type="button" id="openSettings" class="icon-button"></button>
+  </header>
 
-    <div class="site-toggle">
-      <div class="site-info">
-        <div class="site-label">Current site:</div>
-        <div class="site-name" id="siteName">Loading...</div>
-      </div>
-
-      <div class="toggle-container">
-        <label class="toggle-switch">
-          <input type="checkbox" id="enableToggle">
-          <span class="slider"></span>
-        </label>
-        <span class="toggle-status" id="toggleStatus">Enabled</span>
-      </div>
+  <section class="site" aria-label="This site">
+    <div class="site-text">
+      <p class="site-name" id="siteName">Loading…</p>
+      <p class="site-status" id="toggleStatus"></p>
     </div>
+    <label class="switch">
+      <input type="checkbox" id="enableToggle" role="switch" aria-labelledby="siteName" disabled>
+      <span class="switch-track" aria-hidden="true"></span>
+    </label>
+  </section>
 
-    <div class="footer">
-      <a href="#" id="openSettings" class="settings-link">Open Settings</a>
-    </div>
-  </div>
+  <fieldset class="setting">
+    <legend class="setting-title" id="modeLegend">When you select text</legend>
+    <div class="segments" id="popupModes"></div>
+    <p class="setting-hint" id="popupModeHint" aria-live="polite"></p>
+  </fieldset>
+
+  <label class="setting setting-row">
+    <span class="setting-title">Translate into</span>
+    <select id="targetLanguage" class="select"></select>
+  </label>
+
   <script type="module" src="popup.js"></script>
 </body>
 </html>
