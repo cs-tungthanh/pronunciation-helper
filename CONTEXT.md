@@ -1,4 +1,4 @@
-# English Pronunciation Extension
+# Sayly
 
 A Chrome extension for English language learners to hear pronunciation of words and sentences on any webpage.
 

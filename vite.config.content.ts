@@ -7,7 +7,7 @@ export default defineConfig({
   build: {
     lib: {
       entry: resolve(__dirname, 'src/content/content.ts'),
-      name: 'PronunciationHelperContent',
+      name: 'SaylyContent',
       formats: ['iife'],
       fileName: () => 'content.js',
     },

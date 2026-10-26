@@ -1,5 +1,5 @@
 {
-  "name": "pronunciation-helper",
+  "name": "sayly",
   "version": "1.0.7",
   "type": "module",
   "packageManager": "pnpm@12.15.0",
@@ -7,7 +7,7 @@
     "dev": "vite build --watch --mode development & vite build -c vite.config.content.ts --watch --mode development",
     "dev:edge": "bash scripts/dev-edge.sh",
     "build": "tsc && vite build && vite build -c vite.config.content.ts",
-    "build:zip": "pnpm run build && cd dist && zip -r ../pronunciation-helper.zip .",
+    "build:zip": "pnpm run build && cd dist && zip -r ../sayly.zip .",
     "type-check": "tsc --noEmit",
     "cws:check": "node scripts/get-refresh-token.js check",
     "cws:token": "node scripts/get-refresh-token.js",

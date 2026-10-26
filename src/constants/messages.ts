@@ -29,4 +29,4 @@ export const UI_LABELS = {
   TRANSLATION_OFF: 'Off (no translation)',
 } as const;
 
-export const LOG_PREFIX = '[Pronunciation Helper]';
+export const LOG_PREFIX = '[Sayly]';

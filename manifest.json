@@ -1,6 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "English Pronunciation Helper",
+  "name": "Sayly – Pronunciation, IPA & Translate",
+  "short_name": "Sayly",
   "version": "1.0.7",
   "description": "Select text to hear English pronunciation and see IPA notation",
   "permissions": [
@@ -30,7 +31,7 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     },
-    "default_title": "English Pronunciation Helper"
+    "default_title": "Sayly"
   },
   "content_scripts": [
     {

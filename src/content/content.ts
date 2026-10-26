@@ -1,5 +1,5 @@
 /**
- * Main content script - orchestrates pronunciation helper functionality
+ * Main content script - orchestrates Sayly functionality
  */
 
 import { requestTranslation } from '../api/translation-client';

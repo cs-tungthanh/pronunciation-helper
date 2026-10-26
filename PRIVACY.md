@@ -1,10 +1,10 @@
-# Privacy Policy for English Pronunciation Helper
+# Privacy Policy for Sayly
 
 **Last Updated: October 25, 2026**
 
 ## Overview
 
-English Pronunciation Helper is a Chrome extension that helps users learn English pronunciation. We are committed to protecting your privacy and being transparent about our practices.
+Sayly is a Chrome extension that helps users learn English pronunciation. We are committed to protecting your privacy and being transparent about our practices.
 
 ## Data Collection
 

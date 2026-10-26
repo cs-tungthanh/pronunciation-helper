@@ -1,4 +1,4 @@
-# Pronunciation Helper for Chrome
+# Sayly – Pronunciation, IPA & Translate
 
 > A powerful Chrome extension that helps English language learners hear pronunciation and see IPA notation for any text on the web.
 
@@ -7,7 +7,7 @@
 
 ## Overview
 
-Pronunciation Helper is a Chrome extension designed for English language learners. Simply select any text on a webpage to instantly see IPA (International Phonetic Alphabet) notation and hear native American English pronunciation. Perfect for students, teachers, and anyone learning English!
+Sayly is a Chrome extension designed for English language learners. Simply select any text on a webpage to instantly see IPA (International Phonetic Alphabet) notation and hear native American English pronunciation. Perfect for students, teachers, and anyone learning English!
 
 ## Features
 
@@ -279,13 +279,13 @@ This project includes automated CI/CD pipelines for publishing to the Chrome Web
 2. **Create Package**
    ```bash
    pnpm run build:zip
-   # This creates pronunciation-helper.zip
+   # This creates sayly.zip
    ```
 
 3. **Upload to Chrome Web Store**
    - Go to [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole)
    - Click "New Item"
-   - Upload `pronunciation-helper.zip`
+   - Upload `sayly.zip`
    - Fill out store listing (see below)
    - Submit for review
 
@@ -301,33 +301,6 @@ This project includes automated CI/CD pipelines for publishing to the Chrome Web
 - No data collection
 - No user data storage
 - No third-party sharing
-
-## Suggested GitHub Repository Names
-
-1. **pronunciation-helper-chrome** ⭐ (Recommended)
-   - Clear, descriptive
-   - Includes platform name
-   - Good SEO
-
-2. **english-ipa-extension**
-   - Emphasizes IPA feature
-   - Shorter
-   - Educational focus
-
-3. **speak-easy-chrome**
-   - Catchy name
-   - Easy to remember
-   - Friendly tone
-
-4. **voice-learn-assistant**
-   - Generic but clear
-   - Learning-focused
-
-5. **word-pronounce-helper**
-   - Straightforward
-   - Action-oriented
-
-**Recommendation**: `pronunciation-helper-chrome`
 
 ## Contributing
 

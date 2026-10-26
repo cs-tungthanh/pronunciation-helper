@@ -1,2 +1,2 @@
 build:
-	rm ./pronunciation-helper.zip && pn build:zip
+	rm ./sayly.zip && pn build:zip

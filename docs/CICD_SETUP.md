@@ -23,7 +23,7 @@ This guide covers everything you need to set up automated publishing to the Chro
 Upload your extension manually first:
 ```bash
 pnpm run build:zip
-# Upload pronunciation-helper.zip to Chrome Web Store
+# Upload sayly.zip to Chrome Web Store
 # Copy the Extension ID from dashboard
 ```
 
@@ -83,10 +83,10 @@ You must upload your extension manually at least once:
 
 2. Go to [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole)
 
-3. Click **"New Item"** and upload `pronunciation-helper.zip`
+3. Click **"New Item"** and upload `sayly.zip`
 
 4. Fill out the listing:
-   - **Title**: English Pronunciation Helper
+   - **Title**: Sayly – Pronunciation, IPA & Translate
    - **Category**: Education or Accessibility
    - **Screenshots**: Use files in `screenshots/` directory
    - **Privacy Policy**: Link to `PRIVACY.md` in your repo
