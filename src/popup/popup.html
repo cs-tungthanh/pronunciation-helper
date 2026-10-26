@@ -28,11 +28,23 @@
     <legend class="setting-title" id="modeLegend">When you select text</legend>
     <div class="segments" id="popupModes"></div>
     <p class="setting-hint" id="popupModeHint" aria-live="polite"></p>
+    <div class="subsetting" id="copyButtonRow" hidden>
+      <label for="showCopyButton">Copy buttons</label>
+      <span class="switch">
+        <input type="checkbox" id="showCopyButton" role="switch">
+        <span class="switch-track" aria-hidden="true"></span>
+      </span>
+    </div>
   </fieldset>
 
   <label class="setting setting-row">
     <span class="setting-title">Translate into</span>
     <select id="targetLanguage" class="select"></select>
+  </label>
+
+  <label class="setting setting-row">
+    <span class="setting-title">Open words in</span>
+    <select id="dictionarySite" class="select"></select>
   </label>
 
   <script type="module" src="popup.js"></script>

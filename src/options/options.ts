@@ -11,11 +11,15 @@ import {
   getTargetLanguage,
   saveTargetLanguage,
   getPopupMode,
-  savePopupMode
+  savePopupMode,
+  getDictionarySite,
+  saveDictionarySite,
+  getShowCopyButton,
+  saveShowCopyButton
 } from '../shared/utils';
 import { getOptionalElement, onDOMReady } from '../shared/dom-helpers';
 import { ERROR_MESSAGES, UI_LABELS } from '../constants/messages';
-import { POPUP_MODES, PopupMode } from '../constants/app-constants';
+import { POPUP_MODES, PopupMode, DICTIONARY_SITES, DictionarySite } from '../constants/app-constants';
 import { TRANSLATION_CHOICES } from '../constants/languages';
 
 /**
@@ -28,6 +32,8 @@ interface OptionsElements {
   disabledSitesList: HTMLElement | null;
   targetLanguage: HTMLSelectElement | null;
   popupMode: HTMLSelectElement | null;
+  dictionarySite: HTMLSelectElement | null;
+  showCopyButton: HTMLInputElement | null;
 }
 
 /**
@@ -40,7 +46,9 @@ function getOptionsElements(): OptionsElements {
     toggleLabel: getOptionalElement<HTMLElement>('toggleLabel'),
     disabledSitesList: getOptionalElement<HTMLElement>('disabledSitesList'),
     targetLanguage: getOptionalElement<HTMLSelectElement>('targetLanguage'),
-    popupMode: getOptionalElement<HTMLSelectElement>('popupMode')
+    popupMode: getOptionalElement<HTMLSelectElement>('popupMode'),
+    dictionarySite: getOptionalElement<HTMLSelectElement>('dictionarySite'),
+    showCopyButton: getOptionalElement<HTMLInputElement>('showCopyButton')
   };
 }
 
@@ -85,6 +93,36 @@ async function renderPopupMode(elements: OptionsElements): Promise<void> {
 
   // Content scripts listen for storage changes, so no reload is needed
   select.addEventListener('change', () => savePopupMode(select.value as PopupMode));
+}
+
+/**
+ * Render the switch for copy buttons in the popup and the selection bar
+ */
+async function renderShowCopyButton(elements: OptionsElements): Promise<void> {
+  const checkbox = elements.showCopyButton;
+  if (!checkbox) {
+    return;
+  }
+
+  checkbox.checked = await getShowCopyButton();
+  checkbox.addEventListener('change', () => saveShowCopyButton(checkbox.checked));
+}
+
+/**
+ * Render the picker for the site that dictionary links open
+ */
+async function renderDictionarySite(elements: OptionsElements): Promise<void> {
+  const select = elements.dictionarySite;
+  if (!select) {
+    return;
+  }
+
+  Object.entries(DICTIONARY_SITES).forEach(([id, { name }]) => {
+    select.appendChild(new Option(name, id));
+  });
+
+  select.value = await getDictionarySite();
+  select.addEventListener('change', () => saveDictionarySite(select.value as DictionarySite));
 }
 
 /**
@@ -194,6 +232,8 @@ async function initOptions(): Promise<void> {
   await Promise.all([
     renderAll(elements, hostname),
     renderPopupMode(elements),
+    renderDictionarySite(elements),
+    renderShowCopyButton(elements),
     renderTargetLanguage(elements)
   ]);
 }

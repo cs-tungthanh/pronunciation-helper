@@ -2,7 +2,15 @@
  * Shared utility functions for site management and settings
  */
 
-import { DEFAULT_TARGET_LANGUAGE, DEFAULT_POPUP_MODE, POPUP_MODES, PopupMode } from '../constants/app-constants';
+import {
+  DEFAULT_TARGET_LANGUAGE,
+  DEFAULT_POPUP_MODE,
+  POPUP_MODES,
+  PopupMode,
+  DEFAULT_DICTIONARY_SITE,
+  DICTIONARY_SITES,
+  DictionarySite
+} from '../constants/app-constants';
 import { LOG_PREFIX } from '../constants/messages';
 
 /**
@@ -181,6 +189,57 @@ export async function getPopupMode(): Promise<PopupMode> {
 export async function savePopupMode(mode: PopupMode): Promise<void> {
   try {
     await chrome.storage.local.set({ popupMode: mode });
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to save to storage:`, error);
+  }
+}
+
+/**
+ * Get the site the dictionary link opens words on
+ * @returns The stored site, or the default when unset or unknown
+ */
+export async function getDictionarySite(): Promise<DictionarySite> {
+  try {
+    const { dictionarySite } = await chrome.storage.local.get('dictionarySite');
+    const sites: readonly string[] = Object.keys(DICTIONARY_SITES);
+    return sites.includes(dictionarySite) ? dictionarySite : DEFAULT_DICTIONARY_SITE;
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to read storage:`, error);
+    return DEFAULT_DICTIONARY_SITE;
+  }
+}
+
+/**
+ * Save the site the dictionary link opens words on
+ */
+export async function saveDictionarySite(site: DictionarySite): Promise<void> {
+  try {
+    await chrome.storage.local.set({ dictionarySite: site });
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to save to storage:`, error);
+  }
+}
+
+/**
+ * Get whether copy buttons are shown, in the popup and next to the icon in "display icon" mode
+ * @returns true unless turned off
+ */
+export async function getShowCopyButton(): Promise<boolean> {
+  try {
+    const { showCopyButton } = await chrome.storage.local.get('showCopyButton');
+    return showCopyButton !== false;
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to read storage:`, error);
+    return true;
+  }
+}
+
+/**
+ * Save whether copy buttons are shown, in the popup and next to the icon
+ */
+export async function saveShowCopyButton(show: boolean): Promise<void> {
+  try {
+    await chrome.storage.local.set({ showCopyButton: show });
   } catch (error) {
     console.error(`${LOG_PREFIX} Failed to save to storage:`, error);
   }

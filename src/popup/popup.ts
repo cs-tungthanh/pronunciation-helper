@@ -12,12 +12,16 @@ import {
   getPopupMode,
   savePopupMode,
   getTargetLanguage,
-  saveTargetLanguage
+  saveTargetLanguage,
+  getDictionarySite,
+  saveDictionarySite,
+  getShowCopyButton,
+  saveShowCopyButton
 } from '../shared/utils';
 import { getRequiredElement, onDOMReady } from '../shared/dom-helpers';
 import { createIcon, setButtonIcon } from '../ui/icons';
 import { ERROR_MESSAGES, UI_LABELS } from '../constants/messages';
-import { MESSAGE_ACTIONS, POPUP_MODES, PopupMode } from '../constants/app-constants';
+import { MESSAGE_ACTIONS, POPUP_MODES, PopupMode, DICTIONARY_SITES, DictionarySite } from '../constants/app-constants';
 import { TRANSLATION_CHOICES } from '../constants/languages';
 
 /**
@@ -39,7 +43,10 @@ interface PopupElements {
   openSettings: HTMLButtonElement;
   popupModes: HTMLElement;
   popupModeHint: HTMLElement;
+  copyButtonRow: HTMLElement;
+  showCopyButton: HTMLInputElement;
   targetLanguage: HTMLSelectElement;
+  dictionarySite: HTMLSelectElement;
 }
 
 /**
@@ -53,7 +60,10 @@ function getPopupElements(): PopupElements {
     openSettings: getRequiredElement<HTMLButtonElement>('openSettings'),
     popupModes: getRequiredElement<HTMLElement>('popupModes'),
     popupModeHint: getRequiredElement<HTMLElement>('popupModeHint'),
-    targetLanguage: getRequiredElement<HTMLSelectElement>('targetLanguage')
+    copyButtonRow: getRequiredElement<HTMLElement>('copyButtonRow'),
+    showCopyButton: getRequiredElement<HTMLInputElement>('showCopyButton'),
+    targetLanguage: getRequiredElement<HTMLSelectElement>('targetLanguage'),
+    dictionarySite: getRequiredElement<HTMLSelectElement>('dictionarySite')
   };
 }
 
@@ -114,11 +124,16 @@ async function renderSite(elements: PopupElements): Promise<void> {
  * Build the segmented control for what happens when text is selected
  */
 async function renderPopupMode(elements: PopupElements): Promise<void> {
-  const current = await getPopupMode();
+  const [current, showCopy] = await Promise.all([getPopupMode(), getShowCopyButton()]);
 
-  const showHint = (mode: PopupMode) => {
+  // The hint explains the chosen mode; copy buttons only exist when something appears
+  const showModeDetails = (mode: PopupMode) => {
     elements.popupModeHint.textContent = MODE_CHOICES.find(choice => choice.mode === mode)?.hint ?? '';
+    elements.copyButtonRow.hidden = mode === POPUP_MODES.NONE;
   };
+
+  elements.showCopyButton.checked = showCopy;
+  elements.showCopyButton.addEventListener('change', () => saveShowCopyButton(elements.showCopyButton.checked));
 
   MODE_CHOICES.forEach(({ mode, label, icon }) => {
     const segment = document.createElement('div');
@@ -132,7 +147,7 @@ async function renderPopupMode(elements: PopupElements): Promise<void> {
     input.checked = mode === current;
     input.setAttribute('aria-describedby', 'popupModeHint');
     input.addEventListener('change', () => {
-      showHint(mode);
+      showModeDetails(mode);
       savePopupMode(mode);
     });
 
@@ -144,7 +159,7 @@ async function renderPopupMode(elements: PopupElements): Promise<void> {
     elements.popupModes.appendChild(segment);
   });
 
-  showHint(current);
+  showModeDetails(current);
 }
 
 /**
@@ -161,6 +176,19 @@ async function renderTargetLanguage(elements: PopupElements): Promise<void> {
 }
 
 /**
+ * Fill the picker for the site that dictionary links open
+ */
+async function renderDictionarySite(elements: PopupElements): Promise<void> {
+  const select = elements.dictionarySite;
+  Object.entries(DICTIONARY_SITES).forEach(([id, { name }]) => {
+    select.appendChild(new Option(name, id));
+  });
+
+  select.value = await getDictionarySite();
+  select.addEventListener('change', () => saveDictionarySite(select.value as DictionarySite));
+}
+
+/**
  * Initialize popup UI
  */
 async function initPopup(): Promise<void> {
@@ -173,7 +201,8 @@ async function initPopup(): Promise<void> {
   const results = await Promise.allSettled([
     renderSite(elements),
     renderPopupMode(elements),
-    renderTargetLanguage(elements)
+    renderTargetLanguage(elements),
+    renderDictionarySite(elements)
   ]);
 
   if (results[0].status === 'rejected') {

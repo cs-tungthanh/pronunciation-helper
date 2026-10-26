@@ -6,14 +6,20 @@ import { requestWordIpa } from '../api/ipa-client';
 import type { DictionaryEntry, TranslationResult } from '../api/translate-api';
 import {
   POPUP_CSS_CLASS,
-  TRIGGER_ICON_CSS_CLASS,
+  TRIGGER_CSS_CLASS,
+  COPY_FEEDBACK_MS,
   WORD_BUBBLE_GAP_PX,
-  DICTIONARY_LOOKUP_URL
+  DICTIONARY_SITES
 } from '../constants/app-constants';
 import { UI_LABELS } from '../constants/messages';
 import { makeDraggable } from './draggable';
 import { ICONS, createIcon, setButtonIcon } from './icons';
+import type { IconNode } from 'lucide';
 import { speechService } from '../speech/speech-service';
+import { getDictionarySite } from '../shared/utils';
+import { cachedSetting } from '../shared/settings-cache';
+
+const readDictionarySite = cachedSetting('dictionarySite', getDictionarySite);
 
 // A word, allowing inner apostrophes (straight or curly) and hyphens: "it's", "well-known"
 const WORD_PATTERN = /([A-Za-z]+(?:['’-][A-Za-z]+)*)/;
@@ -30,8 +36,9 @@ export interface PronunciationPopup {
 
 /**
  * Create the popup element with a loading placeholder for the translation
+ * @param showCopy Whether to show the copy button (word + IPA, or text + translation)
  */
-export function createPopup(text: string, onClose: () => void): PronunciationPopup {
+export function createPopup(text: string, onClose: () => void, showCopy: boolean): PronunciationPopup {
   const popup = document.createElement('div');
   popup.className = POPUP_CSS_CLASS;
 
@@ -48,9 +55,19 @@ export function createPopup(text: string, onClose: () => void): PronunciationPop
   popup.appendChild(contentWrapper);
 
   const singleWord = text.match(SINGLE_WORD_PATTERN)?.[1];
+
+  // Copies what is hard to select by hand: a word with its IPA, or the text with its translation
+  let ipa: string | null = null;
+  let translationText: string | null = null;
+  const copyButton = showCopy
+    ? createCopyButton('elang-play-button', 14, () =>
+        singleWord ? [singleWord, ipa].filter(Boolean).join(' ') : [text, translationText].filter(Boolean).join('\n')
+      )
+    : null;
+
   if (singleWord) {
     // One word: show its IPA, play and dictionary link inline, like the word bubble
-    contentWrapper.appendChild(createWordHeader(singleWord));
+    contentWrapper.appendChild(createWordHeader(singleWord, copyButton, (found) => (ipa = found)));
   } else {
     // Several words: each word opens its pronunciation bubble
     const wordBubble = createWordBubble(popup);
@@ -59,8 +76,12 @@ export function createPopup(text: string, onClose: () => void): PronunciationPop
     sourceRow.className = 'elang-popup-source';
     sourceRow.appendChild(textDisplay);
 
-    // Play button beside the text
-    sourceRow.appendChild(createPlayButton(text));
+    // Play and copy buttons beside the text
+    const actions = document.createElement('div');
+    actions.className = 'elang-popup-source-actions';
+    actions.appendChild(createPlayButton(text));
+    if (copyButton) actions.appendChild(copyButton);
+    sourceRow.appendChild(actions);
     contentWrapper.appendChild(sourceRow);
 
     // The bubble is anchored to a word, so it closes when the word scrolls away
@@ -83,27 +104,111 @@ export function createPopup(text: string, onClose: () => void): PronunciationPop
   return {
     element: popup,
     setTranslation: (translation) => {
+      translationText = translation?.text ?? null;
       replaceSlot(translationSlot, translation ? createTranslationDisplay(translation) : null);
     }
   };
 }
 
 /**
- * Create the small icon shown by a selection in "display icon" mode; clicking it opens the popup
+ * Create the small bar shown by a selection in "display icon" mode: an icon that opens the popup,
+ * and a button that copies the selected text unless that is turned off
  */
-export function createTriggerIcon(onOpen: () => void): HTMLElement {
-  const button = document.createElement('button');
-  button.className = TRIGGER_ICON_CSS_CLASS;
-  setButtonIcon(button, ICONS.TRIGGER, 16, UI_LABELS.TRIGGER_TOOLTIP);
+export function createTrigger(text: string, onOpen: () => void, showCopy: boolean): HTMLElement {
+  const bar = document.createElement('div');
+  bar.className = TRIGGER_CSS_CLASS;
 
-  // Keep the page's selection and focus as they are while pressing the icon
-  button.addEventListener('mousedown', (e) => e.preventDefault());
+  // Keep the page's selection and focus as they are while pressing a button
+  bar.addEventListener('mousedown', (e) => e.preventDefault());
+
+  bar.appendChild(createTriggerButton(ICONS.TRIGGER, UI_LABELS.TRIGGER_TOOLTIP, onOpen));
+  if (showCopy) bar.appendChild(createCopyButton('elang-trigger-button', 16, () => text));
+
+  return bar;
+}
+
+/**
+ * Create one icon button for the selection bar
+ */
+function createTriggerButton(icon: IconNode, label: string, onClick: () => void): HTMLButtonElement {
+  const button = document.createElement('button');
+  button.className = 'elang-trigger-button';
+  setButtonIcon(button, icon, 16, label);
   button.addEventListener('click', (e) => {
     e.stopPropagation();
-    onOpen();
+    onClick();
+  });
+  return button;
+}
+
+/**
+ * Create a button that copies text, briefly showing whether it worked
+ * @param getText Read when clicked, so it can include content that arrived after the button was made
+ */
+function createCopyButton(className: string, iconSize: number, getText: () => string): HTMLButtonElement {
+  const button = document.createElement('button');
+  button.className = className;
+  let resetTimer: ReturnType<typeof setTimeout> | undefined;
+
+  const showIdle = () => {
+    setButtonIcon(button, ICONS.COPY, iconSize, UI_LABELS.COPY_TOOLTIP);
+    button.classList.remove('elang-copy-done');
+  };
+  showIdle();
+
+  button.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    const copied = await copyText(getText());
+    setButtonIcon(button, copied ? ICONS.COPIED : ICONS.COPY, iconSize, copied ? UI_LABELS.COPIED : UI_LABELS.COPY_FAILED);
+    button.classList.toggle('elang-copy-done', copied);
+
+    clearTimeout(resetTimer);
+    resetTimer = setTimeout(showIdle, COPY_FEEDBACK_MS);
   });
 
   return button;
+}
+
+/**
+ * Copy text to the clipboard
+ * @returns whether it was copied
+ */
+async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    // The clipboard API is missing on http pages or blocked by some sites
+    return copyWithCommand(text);
+  }
+}
+
+/**
+ * Copy text with the browser's copy command, through a hidden text box,
+ * then put the page's selection and focus back
+ */
+function copyWithCommand(text: string): boolean {
+  const selection = window.getSelection();
+  const ranges = selection
+    ? Array.from({ length: selection.rangeCount }, (_, i) => selection.getRangeAt(i))
+    : [];
+  const focused = document.activeElement;
+
+  const textBox = document.createElement('textarea');
+  textBox.value = text;
+  textBox.readOnly = true;
+  textBox.style.cssText = 'position: fixed; top: 0; left: 0; opacity: 0; pointer-events: none;';
+  document.body.appendChild(textBox);
+  textBox.select();
+
+  try {
+    return document.execCommand('copy');
+  } finally {
+    textBox.remove();
+    selection?.removeAllRanges();
+    ranges.forEach((range) => selection?.addRange(range));
+    if (focused instanceof HTMLElement) focused.focus({ preventScroll: true });
+  }
 }
 
 /**
@@ -183,29 +288,40 @@ function createTextDisplay(text: string, onWordClick: (wordElement: HTMLElement)
 }
 
 /**
- * Create a link that opens a word on Dictionary.com in a new tab
+ * Create a link that opens a word on the chosen dictionary site in a new tab
  */
 function createDictionaryLink(className: string, iconSize: number, word?: string): HTMLAnchorElement {
   const link = document.createElement('a');
   link.className = className;
   link.target = '_blank';
   link.rel = 'noopener noreferrer';
-  setButtonIcon(link, ICONS.DICTIONARY, iconSize, UI_LABELS.DICTIONARY_TOOLTIP);
-  if (word) link.href = getDictionaryUrl(word);
+  setButtonIcon(link, ICONS.DICTIONARY, iconSize, '');
+  if (word) pointDictionaryLink(link, word);
   return link;
 }
 
 /**
- * Dictionary.com page for a word as shown in the text
+ * Point a dictionary link at a word, as shown in the text, on the chosen dictionary site
  */
-function getDictionaryUrl(word: string): string {
-  return `${DICTIONARY_LOOKUP_URL}${encodeURIComponent(word.replace(/’/g, "'").toLowerCase())}`;
+function pointDictionaryLink(link: HTMLAnchorElement, word: string): void {
+  const slug = encodeURIComponent(word.replace(/’/g, "'").toLowerCase());
+  readDictionarySite().then((siteId) => {
+    const site = DICTIONARY_SITES[siteId];
+    const label = `Open in ${site.name}`;
+    link.href = site.url + slug;
+    link.title = label;
+    link.setAttribute('aria-label', label);
+  });
 }
 
 /**
  * Create the header for a single selected word: word, IPA, play and dictionary link
  */
-function createWordHeader(word: string): HTMLElement {
+function createWordHeader(
+  word: string,
+  copyButton: HTMLElement | null,
+  onIpa: (ipa: string | null) => void
+): HTMLElement {
   const header = document.createElement('div');
   header.className = 'elang-popup-word-header';
 
@@ -217,6 +333,7 @@ function createWordHeader(word: string): HTMLElement {
   ipaLabel.className = 'elang-popup-word-header-ipa elang-popup-word-bubble-pending';
   ipaLabel.textContent = UI_LABELS.LOOKING_UP;
   requestWordIpa(word).then((ipa) => {
+    onIpa(ipa);
     ipaLabel.textContent = ipa || UI_LABELS.NO_IPA;
     ipaLabel.classList.remove('elang-popup-word-bubble-pending');
   });
@@ -228,6 +345,7 @@ function createWordHeader(word: string): HTMLElement {
   header.appendChild(details);
 
   header.appendChild(createPlayButton(word));
+  if (copyButton) header.appendChild(copyButton);
   header.appendChild(createDictionaryLink('elang-play-button', 14, word));
 
   return header;
@@ -291,7 +409,7 @@ function createWordBubble(popup: HTMLElement) {
     wordElement.classList.add('elang-popup-word-active');
 
     wordLabel.textContent = word;
-    dictionaryLink.href = getDictionaryUrl(word);
+    pointDictionaryLink(dictionaryLink, word);
     ipaLabel.textContent = UI_LABELS.LOOKING_UP;
     ipaLabel.classList.add('elang-popup-word-bubble-pending');
     bubble.hidden = false;

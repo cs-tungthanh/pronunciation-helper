@@ -4,14 +4,14 @@
 
 import {
   POPUP_CSS_CLASS,
-  TRIGGER_ICON_CSS_CLASS,
+  TRIGGER_CSS_CLASS,
   POPUP_POSITION_OFFSET_PX,
   POPUP_EDGE_MARGIN_PX
 } from '../constants/app-constants';
 import { speechService } from '../speech/speech-service';
 
 /**
- * Popup state manager; the shown element is either the popup or the trigger icon that opens it
+ * Popup state manager; the shown element is either the popup or the selection bar that opens it
  */
 class PopupManager {
   private currentPopup: HTMLElement | null = null;
@@ -56,7 +56,7 @@ class PopupManager {
     this.removePopup();
 
     // Also clear popups left by another copy of this script (e.g. one orphaned by an extension reload)
-    document.querySelectorAll(`.${POPUP_CSS_CLASS}, .${TRIGGER_ICON_CSS_CLASS}`).forEach((stale) => stale.remove());
+    document.querySelectorAll(`.${POPUP_CSS_CLASS}, .${TRIGGER_CSS_CLASS}`).forEach((stale) => stale.remove());
 
     this.positionPopup(popup, position);
     this.currentPopup = popup;

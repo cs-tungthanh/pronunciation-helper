@@ -16,7 +16,6 @@ export const MYMEMORY_MAX_CHARS = 500;
 export const TRANSLATION_MAX_CHARS = 5000;
 export const TRANSLATION_SOURCE_LANG = 'en';
 export const DICTIONARY_MAX_MEANINGS = 5;
-export const DICTIONARY_LOOKUP_URL = 'https://www.dictionary.com/browse/';
 export const TRANSLATION_OFF = 'off';
 export const DEFAULT_TARGET_LANGUAGE = 'vi';
 
@@ -31,6 +30,14 @@ export const POPUP_MODES = {
 } as const;
 export type PopupMode = typeof POPUP_MODES[keyof typeof POPUP_MODES];
 export const DEFAULT_POPUP_MODE: PopupMode = POPUP_MODES.IMMEDIATE;
+
+// Sites the dictionary link can open a word on; the word is appended to the URL
+export const DICTIONARY_SITES = {
+  'dictionary-com': { name: 'Dictionary.com', url: 'https://www.dictionary.com/browse/' },
+  cambridge: { name: 'Cambridge Dictionary', url: 'https://dictionary.cambridge.org/dictionary/english/' }
+} as const;
+export type DictionarySite = keyof typeof DICTIONARY_SITES;
+export const DEFAULT_DICTIONARY_SITE: DictionarySite = 'dictionary-com';
 
 // Text-to-speech: Google Translate's voice (undocumented endpoint; tw-ob is the client it answers)
 export const GOOGLE_TTS_URL = 'https://translate.google.com/translate_tts';
@@ -56,10 +63,13 @@ export const IPA_CACHE_SIZE = 500;
 
 // CSS Classes
 export const POPUP_CSS_CLASS = 'elang-pronunciation-popup';
-export const TRIGGER_ICON_CSS_CLASS = 'elang-trigger-icon';
+// The bar by the selection in "display icon" mode: open-popup button, plus copy button unless turned off
+export const TRIGGER_CSS_CLASS = 'elang-trigger';
 
 // UI Timing (milliseconds)
 export const SELECTION_DELAY_MS = 10;
+// How long the copy button shows its done state
+export const COPY_FEEDBACK_MS = 1200;
 // A press that moves less than this is a click, not a drag that selects text
 export const CLICK_MAX_MOVE_PX = 4;
 export const POPUP_POSITION_OFFSET_PX = 10;

@@ -271,6 +271,27 @@ legend.setting-title + * {
   outline-offset: 1px;
 }
 
+/* A setting that belongs to the selected mode, shown under it */
+.subsetting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+  padding: 8px 10px 8px 12px;
+  border-radius: 10px;
+  background: var(--mist);
+  font-size: 13px;
+}
+
+.subsetting[hidden] {
+  display: none;
+}
+
+.subsetting label {
+  cursor: pointer;
+}
+
 .setting-row {
   display: flex;
   align-items: center;
@@ -282,8 +303,9 @@ legend.setting-title + * {
   margin-bottom: 0;
 }
 
+/* One fixed width so the pickers line up */
 .select {
-  max-width: 170px;
+  width: 170px;
   padding: 6px 8px;
   border: 1px solid var(--line);
   border-radius: 8px;

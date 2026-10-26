@@ -3,14 +3,14 @@
  */
 
 import { requestTranslation } from '../api/translation-client';
-import { createPopup, createTriggerIcon } from '../ui/popup-builder';
+import { createPopup, createTrigger } from '../ui/popup-builder';
 import { popupManager } from '../ui/popup-manager';
 import {
   getSelectedText,
   getSelectionPosition,
   isSelectionInsideElement
 } from '../ui/selection-helper';
-import { normalizeHostname, getDisabledSites, isSiteEnabled, getPopupMode } from '../shared/utils';
+import { normalizeHostname, getDisabledSites, isSiteEnabled, getPopupMode, getShowCopyButton } from '../shared/utils';
 import { cachedSetting } from '../shared/settings-cache';
 import { SELECTION_DELAY_MS, CLICK_MAX_MOVE_PX, MESSAGE_ACTIONS, POPUP_MODES } from '../constants/app-constants';
 
@@ -25,6 +25,7 @@ let pressX = 0;
 let pressY = 0;
 
 const readPopupMode = cachedSetting('popupMode', getPopupMode);
+const readShowCopyButton = cachedSetting('showCopyButton', getShowCopyButton);
 
 /**
  * Get current normalized hostname
@@ -69,20 +70,21 @@ async function handleSelection(): Promise<void> {
 
   if (mode === POPUP_MODES.ICON) {
     // Text and position are kept: clicking the icon may change the page's selection
-    const icon = createTriggerIcon(() => showPopup(selectedText, position));
-    popupManager.showPopup(icon, position);
+    const showCopy = await readShowCopyButton();
+    const bar = createTrigger(selectedText, () => showPopup(selectedText, position, showCopy), showCopy);
+    popupManager.showPopup(bar, position);
     return;
   }
 
-  showPopup(selectedText, position);
+  showPopup(selectedText, position, await readShowCopyButton());
 }
 
 /**
  * Show popup for selected text with IPA and speech controls
  */
-function showPopup(selectedText: string, position: { x: number; y: number }): void {
+function showPopup(selectedText: string, position: { x: number; y: number }, showCopy: boolean): void {
   // Show the popup right away; the translation fills in when it arrives
-  const popup = createPopup(selectedText, () => popupManager.removePopup());
+  const popup = createPopup(selectedText, () => popupManager.removePopup(), showCopy);
   popupManager.showPopup(popup.element, position);
 
   // A newer selection may have replaced this popup before a request returned

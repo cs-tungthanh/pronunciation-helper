@@ -22,28 +22,45 @@
   max-height: calc(80vh - 20px);
 }
 
-/* Small icon by the selection in "display icon" mode */
-.elang-trigger-icon {
+/* Small bar by the selection in "display icon" mode: open-popup icon, optional copy button */
+.elang-trigger {
   position: absolute;
   z-index: 999999;
   box-sizing: border-box;
-  width: 28px;
-  height: 28px;
+  display: flex;
+  gap: 2px;
+  margin: 0;
+  padding: 2px;
+  border: 1px solid #dadce0;
+  border-radius: 16px;
+  background: white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.elang-trigger-button {
+  box-sizing: border-box;
+  width: 26px;
+  height: 26px;
   margin: 0;
   padding: 0;
-  border: 1px solid #dadce0;
+  border: none;
   border-radius: 50%;
-  background: white;
+  background: transparent;
   color: #1a73e8;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.elang-trigger-icon:hover {
+.elang-trigger-button:hover {
   background: #e8f0fe;
+}
+
+/* A copy button that just copied */
+.elang-trigger-button.elang-copy-done,
+.elang-play-button.elang-copy-done {
+  color: #188038;
 }
 
 /* Lucide SVG icons; clicks go to the button, not the svg */
@@ -311,6 +328,12 @@
   align-items: flex-start;
   gap: 8px;
   margin-bottom: 8px;
+}
+
+.elang-popup-source-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 4px;
 }
 
 .elang-popup-source .elang-popup-text {
