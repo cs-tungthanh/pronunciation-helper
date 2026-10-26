@@ -64,7 +64,7 @@ If we make changes to this privacy policy, we will update the "Last Updated" dat
 ## Contact
 
 If you have questions about this privacy policy or the extension, please:
-- Open an issue on our [GitHub repository](https://github.com/cs-tungthanh/pronunciation-helper)
+- Open an issue on our [GitHub repository](https://github.com/cs-tungthanh/sayly)
 - Contact the developer at: cs.tungthanh@gmail.com
 
 ## Summary

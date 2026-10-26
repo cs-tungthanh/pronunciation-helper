@@ -128,7 +128,7 @@ You must upload your extension manually at least once:
 Use the provided script:
 
 ```bash
-cd /Users/julius/dev/pronunciation-helper
+cd sayly
 
 # Set environment variables
 export CLIENT_ID="123456789-xxx.apps.googleusercontent.com"

@@ -34,8 +34,8 @@ Sayly is a browser extension for English learners. Highlight a word, a sentence 
 Sayly is not in the Chrome Web Store yet. To install it from source:
 
 ```bash
-git clone https://github.com/cs-tungthanh/pronunciation-helper.git
-cd pronunciation-helper
+git clone https://github.com/cs-tungthanh/sayly.git
+cd sayly
 pnpm install
 pnpm build
 ```
