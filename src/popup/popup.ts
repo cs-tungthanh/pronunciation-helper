@@ -10,6 +10,7 @@ import {
 } from '../shared/utils';
 import { getRequiredElement, onDOMReady } from '../shared/dom-helpers';
 import { ERROR_MESSAGES, UI_LABELS } from '../constants/messages';
+import { MESSAGE_ACTIONS } from '../constants/app-constants';
 
 /**
  * DOM element references
@@ -74,7 +75,7 @@ async function notifyContentScript(hostname: string, enabled: boolean): Promise<
   try {
     const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
     if (tab?.id) {
-      const action = enabled ? 'enable' : 'disable';
+      const action = enabled ? MESSAGE_ACTIONS.ENABLE : MESSAGE_ACTIONS.DISABLE;
       await chrome.tabs.sendMessage(tab.id, { action, hostname });
     }
   } catch (error) {

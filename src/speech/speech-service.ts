@@ -23,7 +23,6 @@ interface SpeakCallbacks {
  * State management for speech playback
  */
 class SpeechService {
-  private isPlaying = false;
   // Bumped on every speak/stop so a superseded playback can tell it is stale
   private playToken = 0;
   // Google-Translate-style repeat: playing the same text again soon after plays it slowly
@@ -32,9 +31,9 @@ class SpeechService {
   private lastSpokenAt = 0;
 
   /**
-   * Ensure browser voices are loaded with timeout (needed only by the fallback)
+   * Wait for browser voices to load, with a timeout (needed only by the fallback, so loaded on first use)
    */
-  async ensureVoicesLoaded(): Promise<void> {
+  private ensureVoicesLoaded(): Promise<void> {
     return new Promise((resolve) => {
       if (!('speechSynthesis' in window) || speechSynthesis.getVoices().length > 0) {
         resolve();
@@ -89,11 +88,9 @@ class SpeechService {
     const token = this.playToken;
     const slow = this.nextIsSlow(text);
 
-    this.isPlaying = true;
     callbacks?.onStart?.();
 
     const finish = (failed: boolean) => {
-      if (token === this.playToken) this.isPlaying = false;
       if (failed) {
         callbacks?.onError?.();
       } else {
@@ -104,7 +101,7 @@ class SpeechService {
     this.speakWithGoogle(text, slow).then((status) => {
       // Fall back only if this playback is still the current one
       if (status === 'failed' && token === this.playToken) {
-        this.speakWithBrowser(text, slow).then(ok => finish(!ok));
+        this.speakWithBrowser(text, slow, () => token === this.playToken).then(ok => finish(!ok));
         return;
       }
       finish(false);
@@ -125,15 +122,16 @@ class SpeechService {
 
   /**
    * Speak with the browser's own voices
+   * @param isCurrent Whether this playback is still wanted once the voices have loaded
    * @returns false when speech synthesis is unavailable or errors
    */
-  private speakWithBrowser(text: string, slow: boolean): Promise<boolean> {
-    return new Promise((resolve) => {
-      if (!('speechSynthesis' in window)) {
-        resolve(false);
-        return;
-      }
+  private async speakWithBrowser(text: string, slow: boolean, isCurrent: () => boolean): Promise<boolean> {
+    if (!('speechSynthesis' in window)) return false;
+    await this.ensureVoicesLoaded();
+    // Replaced or stopped while waiting: not a failure
+    if (!isCurrent()) return true;
 
+    return new Promise((resolve) => {
       const utterance = new SpeechSynthesisUtterance(text);
       const voice = this.getPreferredVoice();
       if (voice) {
@@ -158,7 +156,6 @@ class SpeechService {
    */
   private cancelLocal(): void {
     this.playToken++;
-    this.isPlaying = false;
 
     if ('speechSynthesis' in window) {
       speechSynthesis.cancel();
@@ -176,13 +173,6 @@ class SpeechService {
     } catch {
       // Extension context invalidated (extension reloaded); nothing to stop
     }
-  }
-
-  /**
-   * Check if currently playing
-   */
-  getIsPlaying(): boolean {
-    return this.isPlaying;
   }
 }
 

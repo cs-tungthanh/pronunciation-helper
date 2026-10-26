@@ -3,7 +3,6 @@
  */
 
 import { requestTranslation } from '../api/translation-client';
-import { speechService } from '../speech/speech-service';
 import { createPopup } from '../ui/popup-builder';
 import { popupManager } from '../ui/popup-manager';
 import {
@@ -11,9 +10,8 @@ import {
   getSelectionPosition,
   isSelectionInsideElement
 } from '../ui/selection-helper';
-import { normalizeHostname } from '../shared/utils';
-import { SELECTION_DELAY_MS } from '../constants/app-constants';
-import { LOG_PREFIX } from '../constants/messages';
+import { normalizeHostname, getDisabledSites, isSiteEnabled } from '../shared/utils';
+import { SELECTION_DELAY_MS, MESSAGE_ACTIONS } from '../constants/app-constants';
 
 /**
  * Extension state
@@ -40,15 +38,7 @@ function isExtensionContextValid(): boolean {
  * Check if extension is enabled on current site
  */
 async function isExtensionEnabled(): Promise<boolean> {
-  try {
-    const hostname = getCurrentHostname();
-    const result = await chrome.storage.local.get('disabledSites');
-    const disabledSites: string[] = result.disabledSites || [];
-    return !disabledSites.includes(hostname);
-  } catch (error) {
-    console.error(`${LOG_PREFIX} Storage error:`, error);
-    return true; // Fail open
-  }
+  return isSiteEnabled(getCurrentHostname(), await getDisabledSites());
 }
 
 /**
@@ -106,8 +96,6 @@ function handleKeydown(event: KeyboardEvent): void {
  * Cleanup function to remove all event listeners and UI
  */
 function cleanup(): void {
-  console.log(`${LOG_PREFIX} Cleaning up...`);
-
   popupManager.removePopup();
 
   if (mouseupHandler) {
@@ -123,23 +111,14 @@ function cleanup(): void {
   document.removeEventListener('keydown', handleKeydown);
 
   isActive = false;
-  console.log(`${LOG_PREFIX} Cleanup complete`);
 }
 
 /**
  * Initialize the extension
  */
-async function init(): Promise<void> {
-  if (isActive) {
-    console.log(`${LOG_PREFIX} Already active, skipping init`);
-    return;
-  }
-
-  console.log(`${LOG_PREFIX} Initializing...`);
+function init(): void {
+  if (isActive) return;
   isActive = true;
-
-  // Ensure voices are loaded
-  await speechService.ensureVoicesLoaded();
 
   // Create event handlers
   mouseupHandler = (event: MouseEvent) => {
@@ -163,40 +142,32 @@ async function init(): Promise<void> {
   document.addEventListener('mouseup', mouseupHandler);
   document.addEventListener('mousedown', mousedownHandler);
   document.addEventListener('keydown', handleKeydown);
-
-  console.log(`${LOG_PREFIX} Initialization complete`);
 }
 
 /**
  * Start extension if enabled on current site
  */
 async function start() {
-  const enabled = await isExtensionEnabled();
-  if (!enabled) {
-    return;
+  if (await isExtensionEnabled()) {
+    init();
   }
-  init();
 }
 
 /**
- * Handle messages from popup/options to enable/disable immediately
+ * Handle messages from the extension popup to enable/disable immediately
  */
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log(`${LOG_PREFIX} Received message:`, message);
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message.hostname !== getCurrentHostname()) return false;
 
-  const hostname = getCurrentHostname();
-
-  if (message.action === 'disable' && message.hostname === hostname) {
-    console.log(`${LOG_PREFIX} Disabling extension immediately`);
+  if (message.action === MESSAGE_ACTIONS.DISABLE) {
     cleanup();
     sendResponse({ success: true });
-  } else if (message.action === 'enable' && message.hostname === hostname && !isActive) {
-    console.log(`${LOG_PREFIX} Enabling extension immediately`);
+  } else if (message.action === MESSAGE_ACTIONS.ENABLE) {
     init();
     sendResponse({ success: true });
   }
 
-  return true; // Keep message channel open
+  return false; // Any response was sent synchronously
 });
 
 // Start the extension

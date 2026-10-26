@@ -4,6 +4,9 @@
 
 import { CONTRACTIONS } from '../constants/contractions';
 
+// Every contraction in one pass; keys are plain letters and apostrophes, so they need no escaping
+const CONTRACTION_PATTERN = new RegExp(`\\b(?:${Object.keys(CONTRACTIONS).join('|')})\\b`, 'gi');
+
 /**
  * Check if text is a single valid word (only letters, hyphens, and apostrophes)
  */
@@ -16,15 +19,7 @@ export function isValidSingleWord(text: string): boolean {
  * @example "don't" → "do not"
  */
 export function expandContractions(text: string): string {
-  let expanded = text;
-
-  Object.keys(CONTRACTIONS).forEach(contraction => {
-    const expansion = CONTRACTIONS[contraction];
-    const regex = new RegExp(`\\b${contraction}\\b`, 'gi');
-    expanded = expanded.replace(regex, expansion);
-  });
-
-  return expanded;
+  return text.replace(CONTRACTION_PATTERN, match => CONTRACTIONS[match.toLowerCase()]);
 }
 
 /**

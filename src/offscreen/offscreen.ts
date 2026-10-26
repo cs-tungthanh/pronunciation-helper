@@ -21,11 +21,10 @@ function stopPlayback(): void {
 }
 
 /**
- * Play one MP3 URL to the end
+ * Play one loaded or loading MP3 to the end
  */
-function playUrl(url: string): Promise<SpeechStatus> {
+function playAudio(audio: HTMLAudioElement): Promise<SpeechStatus> {
   return new Promise((resolve) => {
-    const audio = new Audio(url);
     currentAudio = audio;
     finishCurrent = resolve;
     audio.onended = () => resolve('ended');
@@ -41,8 +40,14 @@ async function playUrls(urls: string[]): Promise<SpeechStatus> {
   stopPlayback();
   const token = playToken;
 
-  for (const url of urls) {
-    const status = await playUrl(url);
+  // new Audio(url) starts downloading, so each chunk is fetched while the previous one plays
+  let next: HTMLAudioElement | null = urls.length > 0 ? new Audio(urls[0]) : null;
+
+  for (let i = 0; next; i++) {
+    const audio = next;
+    next = i + 1 < urls.length ? new Audio(urls[i + 1]) : null;
+
+    const status = await playAudio(audio);
     if (token !== playToken) return 'stopped';
     if (status !== 'ended') return status;
   }

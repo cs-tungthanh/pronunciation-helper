@@ -168,10 +168,11 @@ options-refactored.ts
 - **messages.ts**: All user-facing strings and labels
 
 ### Data Layer
-- **dictionary-api.ts**: Fetch IPA data from external API
+- **dictionary-api.ts**: Fetch IPA data from external API (runs in the background worker)
   - Single responsibility: API communication
-  - Pure data transformation
+  - Caches lookups across popups (shared/promise-cache.ts)
   - Error handling
+- **ipa-client.ts**: Content-script side; asks the background for a word's IPA
 
 ### Business Logic Layer
 - **text-processor.ts**: Extract and process text
@@ -265,7 +266,7 @@ options-refactored.ts
 import { extractWords } from '../text/text-processor';
 expect(extractWords("don't")).toEqual(["do", "not"]);
 
-import { fetchIPA } from '../api/dictionary-api';
+import { lookupWordIpa } from '../api/dictionary-api';
 // Mock fetch, test API client
 
 import { normalizeHostname } from '../shared/utils';

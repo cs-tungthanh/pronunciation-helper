@@ -4,71 +4,46 @@
 
 /**
  * Make an element draggable by a handle
- * @param element The element to make draggable
+ * @param element The element to make draggable (absolutely positioned in page coordinates)
  * @param handle The drag handle element
  */
 export function makeDraggable(element: HTMLElement, handle: HTMLElement): void {
-  let isDragging = false;
-  let currentX = 0;
-  let currentY = 0;
-  let initialX = 0;
-  let initialY = 0;
+  let startX = 0;
+  let startY = 0;
+  let pointerX = 0;
+  let pointerY = 0;
 
-  const dragStart = (e: MouseEvent) => {
+  const drag = (e: PointerEvent) => {
+    e.preventDefault();
+    element.style.left = `${startX + e.clientX - pointerX}px`;
+    element.style.top = `${startY + e.clientY - pointerY}px`;
+  };
+
+  const dragEnd = (e: PointerEvent) => {
+    handle.releasePointerCapture(e.pointerId);
+    handle.removeEventListener('pointermove', drag);
+    handle.removeEventListener('pointerup', dragEnd);
+    handle.removeEventListener('pointercancel', dragEnd);
+  };
+
+  handle.addEventListener('pointerdown', (e: PointerEvent) => {
     // Don't start dragging if clicking a button
     const target = e.target as HTMLElement;
-    if (target.tagName === 'BUTTON') {
+    if (e.button !== 0 || target.closest('button')) {
       return;
     }
 
-    initialX = e.clientX;
-    initialY = e.clientY;
+    // offsetLeft/Top are page coordinates, matching how the popup is positioned
+    startX = element.offsetLeft;
+    startY = element.offsetTop;
+    pointerX = e.clientX;
+    pointerY = e.clientY;
 
-    const rect = element.getBoundingClientRect();
-    currentX = rect.left;
-    currentY = rect.top;
-
-    isDragging = true;
+    // Pointer capture keeps move/up events on the handle, so nothing listens on document
+    handle.setPointerCapture(e.pointerId);
+    handle.addEventListener('pointermove', drag);
+    handle.addEventListener('pointerup', dragEnd);
+    handle.addEventListener('pointercancel', dragEnd);
     e.preventDefault();
-  };
-
-  const drag = (e: MouseEvent) => {
-    if (!isDragging) return;
-
-    e.preventDefault();
-
-    const dx = e.clientX - initialX;
-    const dy = e.clientY - initialY;
-
-    const newX = currentX + dx;
-    const newY = currentY + dy;
-
-    element.style.left = `${newX}px`;
-    element.style.top = `${newY}px`;
-  };
-
-  const dragEnd = () => {
-    isDragging = false;
-  };
-
-  handle.addEventListener('mousedown', dragStart);
-  document.addEventListener('mousemove', drag);
-  document.addEventListener('mouseup', dragEnd);
-
-  // Cleanup when element is removed
-  const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      mutation.removedNodes.forEach((node) => {
-        if (node === element) {
-          document.removeEventListener('mousemove', drag);
-          document.removeEventListener('mouseup', dragEnd);
-          observer.disconnect();
-        }
-      });
-    });
   });
-
-  if (element.parentNode) {
-    observer.observe(element.parentNode, { childList: true });
-  }
 }

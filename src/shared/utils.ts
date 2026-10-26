@@ -3,6 +3,7 @@
  */
 
 import { DEFAULT_TARGET_LANGUAGE } from '../constants/app-constants';
+import { LOG_PREFIX } from '../constants/messages';
 
 /**
  * Normalize hostname by stripping www. prefix
@@ -17,30 +18,51 @@ export function normalizeHostname(hostname: string): string {
 }
 
 /**
+ * Normalized hostname of a web page URL
+ * @returns null for anything but http(s) pages (browser internal pages, extension pages, files)
+ */
+function getWebHostname(url: string | undefined): string | null {
+  if (!url) return null;
+  try {
+    const { protocol, hostname } = new URL(url);
+    return protocol === 'http:' || protocol === 'https:' ? normalizeHostname(hostname) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Get current active tab's normalized hostname
- * @returns Normalized hostname or null for browser internal pages
+ * @returns Normalized hostname or null when the tab is not a web page
  * @example
  * await getCurrentTabHostname() // returns 'example.com' or null
  */
 export async function getCurrentTabHostname(): Promise<string | null> {
   try {
     const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-
-    if (!tab?.url) {
-      return null;
-    }
-
-    // Skip browser internal URLs
-    if (tab.url.startsWith('chrome://') ||
-        tab.url.startsWith('edge://') ||
-        tab.url.startsWith('about:')) {
-      return null;
-    }
-
-    const url = new URL(tab.url);
-    return normalizeHostname(url.hostname);
+    return getWebHostname(tab?.url);
   } catch (error) {
-    console.error('[Pronunciation Helper] Failed to get current tab:', error);
+    console.error(`${LOG_PREFIX} Failed to get current tab:`, error);
+    return null;
+  }
+}
+
+/**
+ * Get the hostname of the most recently used web page tab in the focused window
+ * (the options page opens in its own tab, so the active tab is the options page itself)
+ * @returns Normalized hostname or null when no web page is open
+ */
+export async function getRecentWebTabHostname(): Promise<string | null> {
+  try {
+    const tabs = await chrome.tabs.query({ lastFocusedWindow: true });
+    const recentFirst = tabs.sort((a, b) => (b.lastAccessed ?? 0) - (a.lastAccessed ?? 0));
+    for (const tab of recentFirst) {
+      const hostname = getWebHostname(tab.url);
+      if (hostname) return hostname;
+    }
+    return null;
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to query tabs:`, error);
     return null;
   }
 }
@@ -54,7 +76,7 @@ export async function getDisabledSites(): Promise<string[]> {
     const result = await chrome.storage.local.get('disabledSites');
     return result.disabledSites || [];
   } catch (error) {
-    console.error('[Pronunciation Helper] Failed to read storage:', error);
+    console.error(`${LOG_PREFIX} Failed to read storage:`, error);
     return [];
   }
 }
@@ -67,7 +89,7 @@ export async function saveDisabledSites(sites: string[]): Promise<void> {
   try {
     await chrome.storage.local.set({ disabledSites: sites });
   } catch (error) {
-    console.error('[Pronunciation Helper] Failed to save to storage:', error);
+    console.error(`${LOG_PREFIX} Failed to save to storage:`, error);
   }
 }
 
@@ -121,7 +143,7 @@ export async function getTargetLanguage(): Promise<string> {
     const result = await chrome.storage.local.get('targetLanguage');
     return result.targetLanguage || DEFAULT_TARGET_LANGUAGE;
   } catch (error) {
-    console.error('[Pronunciation Helper] Failed to read storage:', error);
+    console.error(`${LOG_PREFIX} Failed to read storage:`, error);
     return DEFAULT_TARGET_LANGUAGE;
   }
 }
@@ -134,6 +156,6 @@ export async function saveTargetLanguage(language: string): Promise<void> {
   try {
     await chrome.storage.local.set({ targetLanguage: language });
   } catch (error) {
-    console.error('[Pronunciation Helper] Failed to save to storage:', error);
+    console.error(`${LOG_PREFIX} Failed to save to storage:`, error);
   }
 }

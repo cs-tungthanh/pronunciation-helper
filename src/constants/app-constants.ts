@@ -26,6 +26,20 @@ export const GOOGLE_TTS_SLOW_SPEED = '0.24';
 export const TTS_LANG = 'en';
 export const OFFSCREEN_DOCUMENT_PATH = 'offscreen.html';
 
+// Runtime message actions (Google TTS ones live in speech/tts-messages.ts)
+export const MESSAGE_ACTIONS = {
+  // Content script → background
+  TRANSLATE: 'translate',
+  LOOKUP_IPA: 'lookup-ipa',
+  // Extension popup → content script
+  ENABLE: 'enable',
+  DISABLE: 'disable'
+} as const;
+
+// Background caches for repeated lookups (entries; the service worker's memory is dropped when it idles out)
+export const TRANSLATION_CACHE_SIZE = 200;
+export const IPA_CACHE_SIZE = 500;
+
 // CSS Classes
 export const POPUP_CSS_CLASS = 'elang-pronunciation-popup';
 

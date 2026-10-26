@@ -11,8 +11,10 @@ import {
   MYMEMORY_MAX_CHARS,
   TRANSLATION_MAX_CHARS,
   TRANSLATION_SOURCE_LANG,
-  DICTIONARY_MAX_MEANINGS
+  DICTIONARY_MAX_MEANINGS,
+  TRANSLATION_CACHE_SIZE
 } from '../constants/app-constants';
+import { PromiseCache } from '../shared/promise-cache';
 import { isValidSingleWord } from '../text/text-processor';
 
 /** One part of speech for a single word, e.g. noun → ["gian kế", "hành động"] */
@@ -29,6 +31,8 @@ export interface TranslationResult {
 }
 
 type GoogleTranslation = Pick<TranslationResult, 'text' | 'dictionary'>;
+
+const translationCache = new PromiseCache<TranslationResult>(TRANSLATION_CACHE_SIZE);
 
 // Index into GOOGLE_TRANSLATE_CLIENTS of the client string that last answered
 let googleClientIndex = 0;
@@ -126,10 +130,17 @@ async function translateWithMyMemory(text: string, to: string): Promise<string> 
 }
 
 /**
- * Translate English text into the target language
+ * Translate English text into the target language, reusing earlier results
  * @throws Error when the text is too long or every provider fails
  */
-export async function translate(text: string, to: string): Promise<TranslationResult> {
+export function translate(text: string, to: string): Promise<TranslationResult> {
+  return translationCache.get(`${to}\n${text}`, () => translateUncached(text, to));
+}
+
+/**
+ * Translate with Google, falling back to MyMemory
+ */
+async function translateUncached(text: string, to: string): Promise<TranslationResult> {
   if (text.length > TRANSLATION_MAX_CHARS) {
     throw new Error(`Text is longer than ${TRANSLATION_MAX_CHARS} characters`);
   }

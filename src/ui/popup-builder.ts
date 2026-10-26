@@ -2,7 +2,7 @@
  * Build popup DOM elements with clickable words and speech controls
  */
 
-import { fetchIPA } from '../api/dictionary-api';
+import { requestWordIpa } from '../api/ipa-client';
 import type { DictionaryEntry, TranslationResult } from '../api/translate-api';
 import {
   POPUP_CSS_CLASS,
@@ -10,7 +10,6 @@ import {
   DICTIONARY_LOOKUP_URL
 } from '../constants/app-constants';
 import { UI_LABELS } from '../constants/messages';
-import { extractWords } from '../text/text-processor';
 import { makeDraggable } from './draggable';
 import { ICONS, createIcon, setButtonIcon } from './icons';
 import { speechService } from '../speech/speech-service';
@@ -198,7 +197,7 @@ function createWordHeader(word: string): HTMLElement {
   const ipaLabel = document.createElement('span');
   ipaLabel.className = 'elang-popup-word-header-ipa elang-popup-word-bubble-pending';
   ipaLabel.textContent = UI_LABELS.LOOKING_UP;
-  lookupWordIpa(word).then((ipa) => {
+  requestWordIpa(word).then((ipa) => {
     ipaLabel.textContent = ipa || UI_LABELS.NO_IPA;
     ipaLabel.classList.remove('elang-popup-word-bubble-pending');
   });
@@ -213,18 +212,6 @@ function createWordHeader(word: string): HTMLElement {
   header.appendChild(createDictionaryLink('elang-play-button', 14, word));
 
   return header;
-}
-
-/**
- * Look up IPA for one word as shown in the text; contractions are expanded ("it's" → "it is")
- */
-async function lookupWordIpa(word: string): Promise<string | null> {
-  const parts = extractWords(word.replace(/’/g, "'"));
-  const ipas = await Promise.all(parts.map(fetchIPA));
-  if (ipas.every(ipa => !ipa)) return null;
-
-  // Keep the parts aligned so a missing piece is visible rather than silently dropped
-  return ipas.map((ipa, i) => ipa || parts[i]).join(' ');
 }
 
 /**
@@ -253,7 +240,7 @@ function createWordBubble(popup: HTMLElement) {
   bubble.appendChild(dictionaryLink);
   popup.appendChild(bubble);
 
-  // Each word is looked up once per popup
+  // Each word is requested once per popup (the background also caches across popups)
   const ipaCache = new Map<string, Promise<string | null>>();
   let activeWord: HTMLElement | null = null;
 
@@ -291,7 +278,7 @@ function createWordBubble(popup: HTMLElement) {
     bubble.hidden = false;
     position(wordElement);
 
-    if (!ipaCache.has(key)) ipaCache.set(key, lookupWordIpa(word));
+    if (!ipaCache.has(key)) ipaCache.set(key, requestWordIpa(word));
     ipaCache.get(key)!.then((ipa) => {
       // Ignore results for a word the user has already moved away from
       if (activeWord !== wordElement) return;

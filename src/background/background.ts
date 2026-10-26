@@ -1,11 +1,12 @@
 /**
- * Background service worker - performs cross-origin translation requests for content scripts
+ * Background service worker - performs cross-origin translation and IPA requests for content scripts
  * and plays Google TTS audio through the offscreen document
  */
 
 import { translate } from '../api/translate-api';
+import { lookupWordIpa } from '../api/dictionary-api';
 import { buildGoogleTtsUrls } from '../api/google-tts';
-import { OFFSCREEN_DOCUMENT_PATH } from '../constants/app-constants';
+import { OFFSCREEN_DOCUMENT_PATH, MESSAGE_ACTIONS } from '../constants/app-constants';
 import { LOG_PREFIX } from '../constants/messages';
 import { OFFSCREEN_TARGET, TTS_MESSAGES, SpeechStatus } from '../speech/tts-messages';
 
@@ -56,7 +57,13 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   // Addressed to the offscreen document, not to us
   if (message.target === OFFSCREEN_TARGET) return false;
 
-  if (message.action === 'translate') {
+  if (message.action === MESSAGE_ACTIONS.LOOKUP_IPA) {
+    // lookupWordIpa reads failures as "no IPA", so it never rejects
+    lookupWordIpa(message.word).then(ipa => sendResponse({ ipa }));
+    return true;
+  }
+
+  if (message.action === MESSAGE_ACTIONS.TRANSLATE) {
     translate(message.text, message.to)
       .then(result => sendResponse({ result }))
       .catch(error => {
