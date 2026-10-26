@@ -11,7 +11,7 @@ import {
   isSelectionInsideElement
 } from '../ui/selection-helper';
 import { normalizeHostname, getDisabledSites, isSiteEnabled } from '../shared/utils';
-import { SELECTION_DELAY_MS, MESSAGE_ACTIONS } from '../constants/app-constants';
+import { SELECTION_DELAY_MS, CLICK_MAX_MOVE_PX, MESSAGE_ACTIONS } from '../constants/app-constants';
 
 /**
  * Extension state
@@ -19,6 +19,9 @@ import { SELECTION_DELAY_MS, MESSAGE_ACTIONS } from '../constants/app-constants'
 let isActive = false;
 let mouseupHandler: ((event: MouseEvent) => void) | null = null;
 let mousedownHandler: ((event: MouseEvent) => void) | null = null;
+// Where the current press started, to tell a drag from a click
+let pressX = 0;
+let pressY = 0;
 
 /**
  * Get current normalized hostname
@@ -71,9 +74,22 @@ function showPopupForSelection(): void {
 }
 
 /**
+ * Whether a press ending in this mouseup could have selected text: a drag, a double/triple click
+ * or a shift-click. A plain click selects nothing, but some pages don't clear the old selection
+ * on click, so reading it then would reopen the popup that the click just dismissed.
+ */
+function isSelectionGesture(event: MouseEvent): boolean {
+  const moved = Math.hypot(event.clientX - pressX, event.clientY - pressY) >= CLICK_MAX_MOVE_PX;
+  return moved || event.detail >= 2 || event.shiftKey;
+}
+
+/**
  * Handle click outside popup to dismiss
  */
 function handleDocumentClick(event: MouseEvent): void {
+  pressX = event.clientX;
+  pressY = event.clientY;
+
   const currentPopup = popupManager.getCurrentPopup();
   if (!currentPopup) return;
 
@@ -132,6 +148,8 @@ function init(): void {
     if (currentPopup && currentPopup.contains(event.target as HTMLElement)) {
       return; // Clicked inside popup
     }
+
+    if (!isSelectionGesture(event)) return;
 
     setTimeout(showPopupForSelection, SELECTION_DELAY_MS);
   };

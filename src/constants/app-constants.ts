@@ -45,6 +45,8 @@ export const POPUP_CSS_CLASS = 'elang-pronunciation-popup';
 
 // UI Timing (milliseconds)
 export const SELECTION_DELAY_MS = 10;
+// A press that moves less than this is a click, not a drag that selects text
+export const CLICK_MAX_MOVE_PX = 4;
 export const POPUP_POSITION_OFFSET_PX = 10;
 export const POPUP_EDGE_MARGIN_PX = 10;
 export const VOICE_LOAD_TIMEOUT_MS = 3000;
