@@ -4,6 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-blue?logo=google-chrome)
+[![Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-add_to_Chrome-1a73e8?logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/cjjpjacmmikigllekaeokclopngphbgo)
 [![Website](https://img.shields.io/badge/Website-try_the_demo-2e7d4f)](https://cs-tungthanh.github.io/projects/sayly/)
 
 Sayly is a browser extension for English learners. Highlight a word, a sentence or a whole paragraph and a small popup shows how each word is pronounced, plays it aloud, and translates it into your language.
@@ -31,7 +32,9 @@ Sayly is a browser extension for English learners. Highlight a word, a sentence 
 
 ## Install
 
-Sayly is not in the Chrome Web Store yet. To install it from source:
+Install Sayly from the [Chrome Web Store](https://chromewebstore.google.com/detail/cjjpjacmmikigllekaeokclopngphbgo). It works in Microsoft Edge too: open the same link and allow extensions from other stores when Edge asks.
+
+### From source
 
 ```bash
 git clone https://github.com/cs-tungthanh/sayly.git
