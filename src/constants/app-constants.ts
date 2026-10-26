@@ -39,6 +39,15 @@ export const DICTIONARY_SITES = {
 export type DictionarySite = keyof typeof DICTIONARY_SITES;
 export const DEFAULT_DICTIONARY_SITE: DictionarySite = 'dictionary-com';
 
+// Color theme for Sayly's popups and pages; "system" follows the browser's light/dark preference
+export const THEMES = {
+  SYSTEM: 'system',
+  LIGHT: 'light',
+  DARK: 'dark'
+} as const;
+export type Theme = typeof THEMES[keyof typeof THEMES];
+export const DEFAULT_THEME: Theme = THEMES.SYSTEM;
+
 // Text-to-speech: Google Translate's voice (undocumented endpoint; tw-ob is the client it answers)
 export const GOOGLE_TTS_URL = 'https://translate.google.com/translate_tts';
 export const GOOGLE_TTS_CLIENT = 'tw-ob';
@@ -65,6 +74,8 @@ export const IPA_CACHE_SIZE = 500;
 export const POPUP_CSS_CLASS = 'elang-pronunciation-popup';
 // The bar by the selection in "display icon" mode: open-popup button, plus copy button unless turned off
 export const TRIGGER_CSS_CLASS = 'elang-trigger';
+// Added to the popup and selection bar when they should be dark
+export const DARK_THEME_CSS_CLASS = 'elang-theme-dark';
 
 // UI Timing (milliseconds)
 export const SELECTION_DELAY_MS = 10;
@@ -82,5 +93,17 @@ export const SLOW_REPEAT_WINDOW_MS = 30000;
 
 // Voice Configuration
 export const PREFERRED_VOICE_LANG = 'en-US';
-export const DEFAULT_SPEECH_RATE = 1.0;
+// The browser voice's slow repeat plays at this fraction of the chosen speed
 export const SLOW_SPEECH_RATE = 0.7;
+// Speech speed choices (playback rate; applies to Google's voice and browser voices)
+export const SPEECH_SPEEDS = [0.5, 0.75, 1, 1.25, 1.5] as const;
+export const DEFAULT_SPEECH_SPEED = 1;
+// The Voice setting: automatic, Google's voice, or a browser voice's voiceURI
+export const AUTO_VOICE = 'auto';
+export const GOOGLE_VOICE = 'google';
+export const DEFAULT_VOICE = AUTO_VOICE;
+// Automatic picks the first of Microsoft's natural en-US voices that is installed (Edge has them),
+// else Google's voice; matched as "Microsoft <name> Online (Natural)", best first
+export const NATURAL_VOICE_NAMES = ['Christopher', 'Ava', 'Jenny', 'Aria', 'Andrew', 'Emma', 'Guy', 'Brian'] as const;
+// Played by the options page's voice preview
+export const VOICE_SAMPLE_TEXT = 'The quick brown fox jumps over the lazy dog.';

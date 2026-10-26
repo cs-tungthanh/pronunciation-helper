@@ -38,6 +38,11 @@
   </fieldset>
 
   <label class="setting setting-row">
+    <span class="setting-title">Voice speed</span>
+    <select id="speechSpeed" class="select"></select>
+  </label>
+
+  <label class="setting setting-row">
     <span class="setting-title">Translate into</span>
     <select id="targetLanguage" class="select"></select>
   </label>
@@ -46,6 +51,11 @@
     <span class="setting-title">Open words in</span>
     <select id="dictionarySite" class="select"></select>
   </label>
+
+  <div class="setting setting-row">
+    <span class="setting-title" id="themeLabel">Theme</span>
+    <div class="theme-switch" id="themeSwitch" role="radiogroup" aria-labelledby="themeLabel"></div>
+  </div>
 
   <script type="module" src="popup.js"></script>
 </body>

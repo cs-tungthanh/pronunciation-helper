@@ -44,6 +44,20 @@
         <p class="note">"Display icon" shows a small button by the selection; click it to open the popup</p>
       </section>
 
+      <section class="voice-section">
+        <h2>Voice</h2>
+        <label class="setting-field">
+          <span>Voice</span>
+          <select id="voice" class="setting-select"></select>
+        </label>
+        <label class="setting-field">
+          <span>Speed</span>
+          <select id="speechSpeed" class="setting-select"></select>
+        </label>
+        <button type="button" id="voicePreview" class="preview-btn">Play sample</button>
+        <p class="note">Automatic uses Microsoft's natural voice in Edge and Google's voice elsewhere. The other voices are the ones installed in your browser and system</p>
+      </section>
+
       <section class="translation-section">
         <h2>Translation</h2>
         <label class="setting-field">
@@ -51,6 +65,15 @@
           <select id="targetLanguage" class="setting-select"></select>
         </label>
         <p class="note">Selected text is sent to Google Translate (or MyMemory as a fallback) when translation is on</p>
+      </section>
+
+      <section class="appearance-section">
+        <h2>Appearance</h2>
+        <label class="setting-field">
+          <span>Theme</span>
+          <select id="theme" class="setting-select"></select>
+        </label>
+        <p class="note">Applies to the pronunciation popup on web pages, the toolbar popup and this page</p>
       </section>
 
       <section class="disabled-sites-section">

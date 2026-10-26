@@ -2,6 +2,8 @@
  * User-facing messages and error text
  */
 
+import { THEMES, Theme, SPEECH_SPEEDS, DEFAULT_SPEECH_SPEED } from './app-constants';
+
 export const ERROR_MESSAGES = {
   ERROR_LOADING: 'Error loading',
   UNABLE_TO_DETECT: 'Unable to detect current site',
@@ -34,6 +36,9 @@ export const UI_LABELS = {
   BROWSER_PAGE_STATUS: "Sayly can't run on browser pages",
   ALL_SETTINGS: 'All settings',
   DICTIONARY_SITE: 'Open words in',
+  THEME_SYSTEM: 'Match system',
+  THEME_LIGHT: 'Light',
+  THEME_DARK: 'Dark',
   SELECTION_LEGEND: 'When you select text',
   MODE_IMMEDIATE_SHORT: 'Popup',
   MODE_ICON_SHORT: 'Icon',
@@ -41,6 +46,22 @@ export const UI_LABELS = {
   MODE_IMMEDIATE_HINT: 'The popup opens as soon as you select text.',
   MODE_ICON_HINT: 'A small icon appears by the selection. Click it to open the popup.',
   MODE_NONE_HINT: 'Nothing appears when you select text.',
+  VOICE_AUTO: 'Automatic (Microsoft natural voice, else Google)',
+  VOICE_GOOGLE: 'Google',
+  SPEED_NORMAL: 'Normal',
 } as const;
 
 export const LOG_PREFIX = '[Sayly]';
+
+/** The Theme setting's choices, as shown in the pickers */
+export const THEME_CHOICES: ReadonlyArray<{ theme: Theme; name: string }> = [
+  { theme: THEMES.SYSTEM, name: UI_LABELS.THEME_SYSTEM },
+  { theme: THEMES.LIGHT, name: UI_LABELS.THEME_LIGHT },
+  { theme: THEMES.DARK, name: UI_LABELS.THEME_DARK }
+];
+
+/** The speech speed setting's choices, as shown in the pickers */
+export const SPEED_CHOICES: ReadonlyArray<{ speed: number; name: string }> = SPEECH_SPEEDS.map(speed => ({
+  speed,
+  name: speed === DEFAULT_SPEECH_SPEED ? `${speed}× (${UI_LABELS.SPEED_NORMAL})` : `${speed}×`
+}));

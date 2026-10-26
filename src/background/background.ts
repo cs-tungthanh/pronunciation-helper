@@ -35,12 +35,13 @@ async function ensureOffscreenDocument(): Promise<void> {
 /**
  * Speak text with Google's voice; resolves when playback ends, is stopped, or fails
  */
-async function speakWithGoogle(text: string, slow: boolean): Promise<SpeechStatus> {
+async function speakWithGoogle(text: string, slow: boolean, speed: number): Promise<SpeechStatus> {
   await ensureOffscreenDocument();
   const response = await chrome.runtime.sendMessage({
     target: OFFSCREEN_TARGET,
     action: TTS_MESSAGES.OFFSCREEN_PLAY,
-    urls: buildGoogleTtsUrls(text, slow)
+    urls: buildGoogleTtsUrls(text, slow),
+    speed
   });
   return response?.status ?? 'failed';
 }
@@ -74,7 +75,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 
   if (message.action === TTS_MESSAGES.SPEAK) {
-    speakWithGoogle(message.text, message.slow)
+    speakWithGoogle(message.text, message.slow, message.speed ?? 1)
       .then(status => sendResponse({ status }))
       .catch(error => {
         console.error(`${LOG_PREFIX} Google TTS failed:`, error);

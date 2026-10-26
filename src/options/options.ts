@@ -15,11 +15,27 @@ import {
   getDictionarySite,
   saveDictionarySite,
   getShowCopyButton,
-  saveShowCopyButton
+  saveShowCopyButton,
+  getTheme,
+  saveTheme,
+  getSpeechSpeed,
+  saveSpeechSpeed,
+  getVoice,
+  saveVoice
 } from '../shared/utils';
-import { getOptionalElement, onDOMReady } from '../shared/dom-helpers';
-import { ERROR_MESSAGES, UI_LABELS } from '../constants/messages';
-import { POPUP_MODES, PopupMode, DICTIONARY_SITES, DictionarySite } from '../constants/app-constants';
+import { speechService } from '../speech/speech-service';
+import { getOptionalElement, onDOMReady, applyPageTheme } from '../shared/dom-helpers';
+import { ERROR_MESSAGES, UI_LABELS, THEME_CHOICES, SPEED_CHOICES } from '../constants/messages';
+import {
+  POPUP_MODES,
+  PopupMode,
+  DICTIONARY_SITES,
+  DictionarySite,
+  Theme,
+  GOOGLE_VOICE,
+  AUTO_VOICE,
+  VOICE_SAMPLE_TEXT
+} from '../constants/app-constants';
 import { TRANSLATION_CHOICES } from '../constants/languages';
 
 /**
@@ -34,6 +50,10 @@ interface OptionsElements {
   popupMode: HTMLSelectElement | null;
   dictionarySite: HTMLSelectElement | null;
   showCopyButton: HTMLInputElement | null;
+  theme: HTMLSelectElement | null;
+  voice: HTMLSelectElement | null;
+  speechSpeed: HTMLSelectElement | null;
+  voicePreview: HTMLButtonElement | null;
 }
 
 /**
@@ -48,7 +68,11 @@ function getOptionsElements(): OptionsElements {
     targetLanguage: getOptionalElement<HTMLSelectElement>('targetLanguage'),
     popupMode: getOptionalElement<HTMLSelectElement>('popupMode'),
     dictionarySite: getOptionalElement<HTMLSelectElement>('dictionarySite'),
-    showCopyButton: getOptionalElement<HTMLInputElement>('showCopyButton')
+    showCopyButton: getOptionalElement<HTMLInputElement>('showCopyButton'),
+    theme: getOptionalElement<HTMLSelectElement>('theme'),
+    voice: getOptionalElement<HTMLSelectElement>('voice'),
+    speechSpeed: getOptionalElement<HTMLSelectElement>('speechSpeed'),
+    voicePreview: getOptionalElement<HTMLButtonElement>('voicePreview')
   };
 }
 
@@ -96,6 +120,30 @@ async function renderPopupMode(elements: OptionsElements): Promise<void> {
 }
 
 /**
+ * Render the theme picker and apply the theme to this page, also as it changes
+ */
+async function renderTheme(elements: OptionsElements): Promise<void> {
+  const current = await getTheme();
+  applyPageTheme(current);
+
+  const select = elements.theme;
+  if (!select) {
+    return;
+  }
+
+  THEME_CHOICES.forEach(({ theme, name }) => {
+    select.appendChild(new Option(name, theme));
+  });
+
+  select.value = current;
+  select.addEventListener('change', () => {
+    const theme = select.value as Theme;
+    applyPageTheme(theme);
+    saveTheme(theme);
+  });
+}
+
+/**
  * Render the switch for copy buttons in the popup and the selection bar
  */
 async function renderShowCopyButton(elements: OptionsElements): Promise<void> {
@@ -123,6 +171,52 @@ async function renderDictionarySite(elements: OptionsElements): Promise<void> {
 
   select.value = await getDictionarySite();
   select.addEventListener('change', () => saveDictionarySite(select.value as DictionarySite));
+}
+
+/**
+ * Render the voice picker: Google's voice, then the browser's English voices
+ */
+async function renderVoice(elements: OptionsElements): Promise<void> {
+  const select = elements.voice;
+  if (!select) {
+    return;
+  }
+
+  const [voices, current] = await Promise.all([speechService.getEnglishVoices(), getVoice()]);
+  select.appendChild(new Option(UI_LABELS.VOICE_AUTO, AUTO_VOICE));
+  select.appendChild(new Option(UI_LABELS.VOICE_GOOGLE, GOOGLE_VOICE));
+  voices.forEach(voice => {
+    select.appendChild(new Option(`${voice.name} (${voice.lang})`, voice.voiceURI));
+  });
+
+  // A stored voice that is no longer installed plays with Google's, so show that
+  const listed = current === AUTO_VOICE || voices.some(voice => voice.voiceURI === current);
+  select.value = listed ? current : GOOGLE_VOICE;
+  select.addEventListener('change', () => saveVoice(select.value));
+}
+
+/**
+ * Render the speech speed picker
+ */
+async function renderSpeechSpeed(elements: OptionsElements): Promise<void> {
+  const select = elements.speechSpeed;
+  if (!select) {
+    return;
+  }
+
+  SPEED_CHOICES.forEach(({ speed, name }) => {
+    select.appendChild(new Option(name, String(speed)));
+  });
+
+  select.value = String(await getSpeechSpeed());
+  select.addEventListener('change', () => saveSpeechSpeed(Number(select.value)));
+}
+
+/**
+ * Wire the button that plays a sample with the chosen voice and speed
+ */
+function setupVoicePreview(elements: OptionsElements): void {
+  elements.voicePreview?.addEventListener('click', () => speechService.speak(VOICE_SAMPLE_TEXT));
 }
 
 /**
@@ -229,11 +323,15 @@ async function initOptions(): Promise<void> {
   const elements = getOptionsElements();
   const hostname = await getRecentWebTabHostname();
   setupCurrentSiteToggle(elements, hostname);
+  setupVoicePreview(elements);
   await Promise.all([
     renderAll(elements, hostname),
     renderPopupMode(elements),
     renderDictionarySite(elements),
     renderShowCopyButton(elements),
+    renderTheme(elements),
+    renderVoice(elements),
+    renderSpeechSpeed(elements),
     renderTargetLanguage(elements)
   ]);
 }

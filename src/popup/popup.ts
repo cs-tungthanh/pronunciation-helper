@@ -2,7 +2,7 @@
  * Browser extension popup UI: this site's on/off switch plus the settings that apply everywhere
  */
 
-import { AudioLines, EyeOff, MessageSquareText, Settings } from 'lucide';
+import { AudioLines, EyeOff, MessageSquareText, Monitor, Moon, Settings, Sun } from 'lucide';
 import type { IconNode } from 'lucide';
 import {
   getCurrentTabHostname,
@@ -16,12 +16,23 @@ import {
   getDictionarySite,
   saveDictionarySite,
   getShowCopyButton,
-  saveShowCopyButton
+  saveShowCopyButton,
+  getTheme,
+  saveTheme,
+  getSpeechSpeed,
+  saveSpeechSpeed
 } from '../shared/utils';
-import { getRequiredElement, onDOMReady } from '../shared/dom-helpers';
+import { getRequiredElement, onDOMReady, applyPageTheme } from '../shared/dom-helpers';
 import { createIcon, setButtonIcon } from '../ui/icons';
-import { ERROR_MESSAGES, UI_LABELS } from '../constants/messages';
-import { MESSAGE_ACTIONS, POPUP_MODES, PopupMode, DICTIONARY_SITES, DictionarySite } from '../constants/app-constants';
+import { ERROR_MESSAGES, UI_LABELS, THEME_CHOICES, SPEED_CHOICES } from '../constants/messages';
+import {
+  MESSAGE_ACTIONS,
+  POPUP_MODES,
+  PopupMode,
+  DICTIONARY_SITES,
+  DictionarySite,
+  Theme
+} from '../constants/app-constants';
 import { TRANSLATION_CHOICES } from '../constants/languages';
 
 /**
@@ -32,6 +43,13 @@ const MODE_CHOICES: ReadonlyArray<{ mode: PopupMode; label: string; hint: string
   { mode: POPUP_MODES.ICON, label: UI_LABELS.MODE_ICON_SHORT, hint: UI_LABELS.MODE_ICON_HINT, icon: AudioLines },
   { mode: POPUP_MODES.NONE, label: UI_LABELS.MODE_NONE_SHORT, hint: UI_LABELS.MODE_NONE_HINT, icon: EyeOff }
 ];
+
+/** Icons for the theme switch: match system, light, dark */
+const THEME_ICONS: Record<Theme, IconNode> = {
+  system: Monitor,
+  light: Sun,
+  dark: Moon
+};
 
 /**
  * DOM element references
@@ -45,8 +63,10 @@ interface PopupElements {
   popupModeHint: HTMLElement;
   copyButtonRow: HTMLElement;
   showCopyButton: HTMLInputElement;
+  speechSpeed: HTMLSelectElement;
   targetLanguage: HTMLSelectElement;
   dictionarySite: HTMLSelectElement;
+  themeSwitch: HTMLElement;
 }
 
 /**
@@ -62,8 +82,10 @@ function getPopupElements(): PopupElements {
     popupModeHint: getRequiredElement<HTMLElement>('popupModeHint'),
     copyButtonRow: getRequiredElement<HTMLElement>('copyButtonRow'),
     showCopyButton: getRequiredElement<HTMLInputElement>('showCopyButton'),
+    speechSpeed: getRequiredElement<HTMLSelectElement>('speechSpeed'),
     targetLanguage: getRequiredElement<HTMLSelectElement>('targetLanguage'),
-    dictionarySite: getRequiredElement<HTMLSelectElement>('dictionarySite')
+    dictionarySite: getRequiredElement<HTMLSelectElement>('dictionarySite'),
+    themeSwitch: getRequiredElement<HTMLElement>('themeSwitch')
   };
 }
 
@@ -163,6 +185,19 @@ async function renderPopupMode(elements: PopupElements): Promise<void> {
 }
 
 /**
+ * Fill the speech speed picker
+ */
+async function renderSpeechSpeed(elements: PopupElements): Promise<void> {
+  const select = elements.speechSpeed;
+  SPEED_CHOICES.forEach(({ speed, name }) => {
+    select.appendChild(new Option(name, String(speed)));
+  });
+
+  select.value = String(await getSpeechSpeed());
+  select.addEventListener('change', () => saveSpeechSpeed(Number(select.value)));
+}
+
+/**
  * Fill the translation language picker
  */
 async function renderTargetLanguage(elements: PopupElements): Promise<void> {
@@ -189,6 +224,39 @@ async function renderDictionarySite(elements: PopupElements): Promise<void> {
 }
 
 /**
+ * Fill the theme picker and apply the theme to this popup, also as it changes
+ */
+async function renderTheme(elements: PopupElements): Promise<void> {
+  const current = await getTheme();
+  applyPageTheme(current);
+
+  THEME_CHOICES.forEach(({ theme, name }) => {
+    const input = document.createElement('input');
+    input.type = 'radio';
+    input.name = 'theme';
+    input.id = `theme-${theme}`;
+    input.value = theme;
+    input.checked = theme === current;
+    input.addEventListener('change', () => {
+      applyPageTheme(theme);
+      saveTheme(theme);
+    });
+
+    // Icon only; the name is its tooltip and what screen readers announce
+    const label = document.createElement('label');
+    label.htmlFor = input.id;
+    label.title = name;
+    label.setAttribute('aria-label', name);
+    label.appendChild(createIcon(THEME_ICONS[theme], 16));
+
+    const option = document.createElement('span');
+    option.className = 'theme-option';
+    option.append(input, label);
+    elements.themeSwitch.appendChild(option);
+  });
+}
+
+/**
  * Initialize popup UI
  */
 async function initPopup(): Promise<void> {
@@ -201,8 +269,10 @@ async function initPopup(): Promise<void> {
   const results = await Promise.allSettled([
     renderSite(elements),
     renderPopupMode(elements),
+    renderSpeechSpeed(elements),
     renderTargetLanguage(elements),
-    renderDictionarySite(elements)
+    renderDictionarySite(elements),
+    renderTheme(elements)
   ]);
 
   if (results[0].status === 'rejected') {

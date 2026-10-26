@@ -5,13 +5,20 @@
 
 import {
   PREFERRED_VOICE_LANG,
-  DEFAULT_SPEECH_RATE,
   SLOW_SPEECH_RATE,
+  GOOGLE_VOICE,
+  AUTO_VOICE,
+  NATURAL_VOICE_NAMES,
   SLOW_REPEAT_WINDOW_MS,
   VOICE_LOAD_TIMEOUT_MS,
   SPEECH_FALLBACK_TIMEOUT_MS
 } from '../constants/app-constants';
 import { TTS_MESSAGES, SpeechStatus } from './tts-messages';
+import { getSpeechSpeed, getVoice } from '../shared/utils';
+import { cachedSetting } from '../shared/settings-cache';
+
+const readSpeechSpeed = cachedSetting('speechSpeed', getSpeechSpeed);
+const readVoice = cachedSetting('voice', getVoice);
 
 interface SpeakCallbacks {
   onStart?: () => void;
@@ -65,6 +72,40 @@ class SpeechService {
   }
 
   /**
+   * The browser's English voices, for the voice picker
+   */
+  async getEnglishVoices(): Promise<SpeechSynthesisVoice[]> {
+    if (!('speechSynthesis' in window)) return [];
+    await this.ensureVoicesLoaded();
+    return speechSynthesis.getVoices().filter(voice => voice.lang.toLowerCase().startsWith('en'));
+  }
+
+  /**
+   * The browser voice chosen in settings
+   * @returns null for Google's voice, or when the chosen voice isn't on this device
+   */
+  private async getChosenVoice(voiceId: string): Promise<SpeechSynthesisVoice | null> {
+    if (voiceId === GOOGLE_VOICE || !('speechSynthesis' in window)) return null;
+    await this.ensureVoicesLoaded();
+    const voices = speechSynthesis.getVoices();
+    if (voiceId === AUTO_VOICE) return this.findNaturalVoice(voices);
+    return voices.find(voice => voice.voiceURI === voiceId) || null;
+  }
+
+  /**
+   * The best installed Microsoft natural en-US voice, or null outside Edge
+   */
+  private findNaturalVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
+    for (const name of NATURAL_VOICE_NAMES) {
+      const voice = voices.find(v =>
+        v.lang === PREFERRED_VOICE_LANG && v.name.startsWith(`Microsoft ${name} Online (Natural)`)
+      );
+      if (voice) return voice;
+    }
+    return null;
+  }
+
+  /**
    * Decide the speed: a repeat of the same text within the window alternates normal → slow → normal
    */
   private nextIsSlow(text: string): boolean {
@@ -98,22 +139,39 @@ class SpeechService {
       }
     };
 
-    this.speakWithGoogle(text, slow).then((status) => {
-      // Fall back only if this playback is still the current one
-      if (status === 'failed' && token === this.playToken) {
-        this.speakWithBrowser(text, slow, () => token === this.playToken).then(ok => finish(!ok));
-        return;
-      }
-      finish(false);
-    });
+    const isCurrent = () => token === this.playToken;
+    this.play(text, slow, isCurrent).then(ok => finish(!ok));
+  }
+
+  /**
+   * Play with the chosen voice: a browser voice, or Google's with the browser's as fallback
+   * @returns false when playback failed
+   */
+  private async play(text: string, slow: boolean, isCurrent: () => boolean): Promise<boolean> {
+    const [speed, voiceId] = await Promise.all([readSpeechSpeed(), readVoice()]);
+    const chosenVoice = await this.getChosenVoice(voiceId);
+    // Replaced or stopped while reading settings: not a failure
+    if (!isCurrent()) return true;
+
+    // A chosen voice that is no longer installed falls through to Google
+    if (chosenVoice) {
+      return this.speakWithBrowser(text, slow, speed, chosenVoice, isCurrent);
+    }
+
+    const status = await this.speakWithGoogle(text, slow, speed);
+    // Fall back only if this playback is still the current one
+    if (status === 'failed' && isCurrent()) {
+      return this.speakWithBrowser(text, slow, speed, null, isCurrent);
+    }
+    return true;
   }
 
   /**
    * Ask the background to play Google's voice; resolves when playback is over
    */
-  private async speakWithGoogle(text: string, slow: boolean): Promise<SpeechStatus> {
+  private async speakWithGoogle(text: string, slow: boolean, speed: number): Promise<SpeechStatus> {
     try {
-      const response = await chrome.runtime.sendMessage({ action: TTS_MESSAGES.SPEAK, text, slow });
+      const response = await chrome.runtime.sendMessage({ action: TTS_MESSAGES.SPEAK, text, slow, speed });
       return response?.status ?? 'failed';
     } catch {
       return 'failed';
@@ -122,10 +180,17 @@ class SpeechService {
 
   /**
    * Speak with the browser's own voices
+   * @param voice The voice to use, or null for the preferred en-US voice
    * @param isCurrent Whether this playback is still wanted once the voices have loaded
    * @returns false when speech synthesis is unavailable or errors
    */
-  private async speakWithBrowser(text: string, slow: boolean, isCurrent: () => boolean): Promise<boolean> {
+  private async speakWithBrowser(
+    text: string,
+    slow: boolean,
+    speed: number,
+    voice: SpeechSynthesisVoice | null,
+    isCurrent: () => boolean
+  ): Promise<boolean> {
     if (!('speechSynthesis' in window)) return false;
     await this.ensureVoicesLoaded();
     // Replaced or stopped while waiting: not a failure
@@ -133,12 +198,12 @@ class SpeechService {
 
     return new Promise((resolve) => {
       const utterance = new SpeechSynthesisUtterance(text);
-      const voice = this.getPreferredVoice();
+      voice ??= this.getPreferredVoice();
       if (voice) {
         utterance.voice = voice;
       }
-      utterance.lang = PREFERRED_VOICE_LANG;
-      utterance.rate = slow ? SLOW_SPEECH_RATE : DEFAULT_SPEECH_RATE;
+      utterance.lang = voice?.lang ?? PREFERRED_VOICE_LANG;
+      utterance.rate = slow ? speed * SLOW_SPEECH_RATE : speed;
 
       utterance.onend = () => resolve(true);
       // Being cancelled by stop() is not a failure

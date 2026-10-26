@@ -1,9 +1,72 @@
+/* Colors for the popup and selection bar, scoped to Sayly's own elements since they sit on other
+   sites' pages. Light by default; the content script adds .elang-theme-dark for dark. */
+.elang-pronunciation-popup,
+.elang-trigger {
+  --elang-surface: #ffffff;
+  --elang-surface-muted: #f9f9f9;
+  --elang-text: #333333;
+  --elang-text-muted: #555555;
+  --elang-text-faint: #80868b;
+  --elang-placeholder: #9aa0a6;
+  --elang-accent: #1a73e8;
+  --elang-accent-soft: #e8f0fe;
+  --elang-accent-strong-soft: #d2e3fc;
+  --elang-accent-ring: #a8c7fa;
+  --elang-translation-bg: #f1f6fe;
+  --elang-border: #dadce0;
+  --elang-handle-top: #f8f9fa;
+  --elang-handle-bottom: #e9ecef;
+  --elang-handle-line: #dee2e6;
+  --elang-close-bg: rgba(0, 0, 0, 0.1);
+  --elang-close-text: #6c757d;
+  --elang-success: #188038;
+  --elang-warning: #e67700;
+  --elang-scroll-track: #f1f1f1;
+  --elang-scroll-thumb: #c4c4c4;
+  --elang-scroll-thumb-hover: #999999;
+  --elang-skeleton: #eef1f5;
+  --elang-skeleton-shine: #f6f8fa;
+  --elang-shadow: rgba(0, 0, 0, 0.15);
+  color-scheme: light;
+}
+
+.elang-pronunciation-popup.elang-theme-dark,
+.elang-trigger.elang-theme-dark {
+  --elang-surface: #202124;
+  --elang-surface-muted: #2a2b2e;
+  --elang-text: #e8eaed;
+  --elang-text-muted: #bdc1c6;
+  --elang-text-faint: #9aa0a6;
+  --elang-placeholder: #80868b;
+  --elang-accent: #8ab4f8;
+  --elang-accent-soft: #283447;
+  --elang-accent-strong-soft: #33455f;
+  --elang-accent-ring: #5f84c4;
+  --elang-translation-bg: #1e2a3b;
+  --elang-border: #3c4043;
+  --elang-handle-top: #2d2e31;
+  --elang-handle-bottom: #27282b;
+  --elang-handle-line: #3c4043;
+  --elang-close-bg: rgba(255, 255, 255, 0.12);
+  --elang-close-text: #bdc1c6;
+  --elang-success: #81c995;
+  --elang-warning: #fcad70;
+  --elang-scroll-track: #2a2b2e;
+  --elang-scroll-thumb: #5f6368;
+  --elang-scroll-thumb-hover: #80868b;
+  --elang-skeleton: #2a2b2e;
+  --elang-skeleton-shine: #35363a;
+  --elang-shadow: rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
 .elang-pronunciation-popup {
   position: absolute;
   z-index: 999999;
-  background: white;
+  background: var(--elang-surface);
+  color: var(--elang-text);
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px var(--elang-shadow);
   padding: 0;
   min-width: 200px;
   max-width: 500px;
@@ -31,10 +94,10 @@
   gap: 2px;
   margin: 0;
   padding: 2px;
-  border: 1px solid #dadce0;
+  border: 1px solid var(--elang-border);
   border-radius: 16px;
-  background: white;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  background: var(--elang-surface);
+  box-shadow: 0 2px 6px var(--elang-shadow);
 }
 
 .elang-trigger-button {
@@ -46,7 +109,7 @@
   border: none;
   border-radius: 50%;
   background: transparent;
-  color: #1a73e8;
+  color: var(--elang-accent);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -54,13 +117,13 @@
 }
 
 .elang-trigger-button:hover {
-  background: #e8f0fe;
+  background: var(--elang-accent-soft);
 }
 
 /* A copy button that just copied */
 .elang-trigger-button.elang-copy-done,
 .elang-play-button.elang-copy-done {
-  color: #188038;
+  color: var(--elang-success);
 }
 
 /* Lucide SVG icons; clicks go to the button, not the svg */
@@ -75,14 +138,14 @@
 }
 
 .elang-popup-drag-handle {
-  background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
-  border-bottom: 1px solid #dee2e6;
+  background: linear-gradient(to bottom, var(--elang-handle-top), var(--elang-handle-bottom));
+  border-bottom: 1px solid var(--elang-handle-line);
   padding: 4px;
   text-align: center;
   cursor: move;
   user-select: none;
   font-size: 10px;
-  color: #9aa0a6;
+  color: var(--elang-placeholder);
   border-radius: 8px 8px 0 0;
   position: relative;
 }
@@ -94,8 +157,8 @@
   width: 20px;
   height: 20px;
   border: none;
-  background: rgba(0, 0, 0, 0.1);
-  color: #6c757d;
+  background: var(--elang-close-bg);
+  color: var(--elang-close-text);
   border-radius: 50%;
   cursor: pointer;
   display: flex;
@@ -116,11 +179,11 @@
 }
 
 .elang-popup-drag-handle:hover {
-  background: linear-gradient(to bottom, #e9ecef, #dee2e6);
+  background: linear-gradient(to bottom, var(--elang-handle-bottom), var(--elang-handle-line));
 }
 
 .elang-popup-drag-handle:active {
-  background: #dee2e6;
+  background: var(--elang-handle-line);
   cursor: grabbing;
 }
 
@@ -130,51 +193,51 @@
 }
 
 .elang-popup-content-wrapper::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--elang-scroll-track);
   border-radius: 4px;
 }
 
 .elang-popup-content-wrapper::-webkit-scrollbar-thumb {
-  background: #888;
+  background: var(--elang-scroll-thumb);
   border-radius: 4px;
 }
 
 .elang-popup-content-wrapper::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: var(--elang-scroll-thumb-hover);
 }
 
 .elang-popup-text {
   margin-bottom: 8px;
-  color: #333;
+  color: var(--elang-text);
   word-wrap: break-word;
   font-size: 13px;
   max-height: 100px;
   overflow-y: auto;
   padding: 4px;
-  background: #f9f9f9;
+  background: var(--elang-surface-muted);
   border-radius: 4px;
 }
 
 .elang-popup-word {
   cursor: pointer;
   border-radius: 3px;
-  border-bottom: 1px dotted #9aa0a6;
+  border-bottom: 1px dotted var(--elang-placeholder);
   transition: background 0.15s;
 }
 
 .elang-popup-word:hover {
-  background: #e8f0fe;
-  border-bottom-color: #1a73e8;
+  background: var(--elang-accent-soft);
+  border-bottom-color: var(--elang-accent);
 }
 
 .elang-popup-word:focus-visible {
-  outline: 2px solid #1a73e8;
+  outline: 2px solid var(--elang-accent);
   outline-offset: 1px;
 }
 
 .elang-popup-word.elang-popup-word-active {
-  background: #d2e3fc;
-  border-bottom-color: #1a73e8;
+  background: var(--elang-accent-strong-soft);
+  border-bottom-color: var(--elang-accent);
 }
 
 /* Small bubble with one word's IPA, anchored under the clicked word */
@@ -186,10 +249,10 @@
   gap: 8px;
   max-width: calc(100% - 12px);
   padding: 6px 6px 6px 10px;
-  background: white;
-  border: 1px solid #d2e3fc;
+  background: var(--elang-surface);
+  border: 1px solid var(--elang-accent-strong-soft);
   border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px var(--elang-shadow);
   white-space: nowrap;
 }
 
@@ -200,19 +263,19 @@
 .elang-popup-word-bubble-word {
   font-size: 12px;
   font-weight: 600;
-  color: #555;
+  color: var(--elang-text-muted);
 }
 
 .elang-popup-word-bubble-ipa {
   font-family: 'Lucida Sans Unicode', 'Arial Unicode MS', sans-serif;
   font-size: 14px;
-  color: #1a73e8;
+  color: var(--elang-accent);
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .elang-popup-word-bubble-ipa.elang-popup-word-bubble-pending {
-  color: #9aa0a6;
+  color: var(--elang-placeholder);
   font-size: 12px;
 }
 
@@ -224,8 +287,8 @@
   padding: 0;
   border: none;
   border-radius: 50%;
-  background: #e8f0fe;
-  color: #1a73e8;
+  background: var(--elang-accent-soft);
+  color: var(--elang-accent);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -234,7 +297,7 @@
 
 .elang-popup-word-bubble-speak:hover,
 .elang-popup-word-bubble-link:hover {
-  background: #d2e3fc;
+  background: var(--elang-accent-strong-soft);
 }
 
 .elang-popup-text::-webkit-scrollbar {
@@ -242,29 +305,29 @@
 }
 
 .elang-popup-text::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--elang-scroll-track);
   border-radius: 3px;
 }
 
 .elang-popup-text::-webkit-scrollbar-thumb {
-  background: #ccc;
+  background: var(--elang-scroll-thumb);
   border-radius: 3px;
 }
 
 .elang-popup-text::-webkit-scrollbar-thumb:hover {
-  background: #aaa;
+  background: var(--elang-scroll-thumb-hover);
 }
 
 .elang-popup-translation {
   margin-bottom: 8px;
-  color: #333;
+  color: var(--elang-text);
   word-wrap: break-word;
   font-size: 14px;
   max-height: 180px;
   overflow-y: auto;
   padding: 4px 8px;
-  border-left: 3px solid #1a73e8;
-  background: #f1f6fe;
+  border-left: 3px solid var(--elang-accent);
+  background: var(--elang-translation-bg);
   border-radius: 0 4px 4px 0;
 }
 
@@ -275,17 +338,17 @@
   row-gap: 2px;
   margin-top: 6px;
   padding-top: 6px;
-  border-top: 1px solid #d2e3fc;
+  border-top: 1px solid var(--elang-accent-strong-soft);
   font-size: 13px;
 }
 
 .elang-popup-dictionary-pos {
   font-style: italic;
-  color: #80868b;
+  color: var(--elang-text-faint);
 }
 
 .elang-popup-dictionary-meanings {
-  color: #333;
+  color: var(--elang-text);
 }
 
 /* Single selected word: word and IPA, then play and dictionary buttons */
@@ -308,18 +371,18 @@
 .elang-popup-word-header-word {
   font-size: 15px;
   font-weight: 500;
-  color: #333;
+  color: var(--elang-text);
   word-break: break-word;
 }
 
 .elang-popup-word-header-ipa {
   font-family: 'Lucida Sans Unicode', 'Arial Unicode MS', sans-serif;
   font-size: 14px;
-  color: #1a73e8;
+  color: var(--elang-accent);
 }
 
 .elang-popup-word-header-ipa.elang-popup-word-bubble-pending {
-  color: #9aa0a6;
+  color: var(--elang-placeholder);
   font-size: 12px;
 }
 
@@ -350,7 +413,7 @@
 .elang-popup-skeleton {
   margin-bottom: 8px;
   border-radius: 4px;
-  background: linear-gradient(90deg, #eef1f5 25%, #f6f8fa 50%, #eef1f5 75%);
+  background: linear-gradient(90deg, var(--elang-skeleton) 25%, var(--elang-skeleton-shine) 50%, var(--elang-skeleton) 75%);
   background-size: 200% 100%;
   animation: elang-shimmer 1.2s linear infinite;
 }
@@ -371,7 +434,7 @@
 
 .elang-popup-warning {
   font-size: 12px;
-  color: #e67700;
+  color: var(--elang-warning);
   margin-bottom: 8px;
 }
 
@@ -382,8 +445,8 @@
   padding: 0;
   border: none;
   border-radius: 50%;
-  background: #e8f0fe;
-  color: #1a73e8;
+  background: var(--elang-accent-soft);
+  color: var(--elang-accent);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -392,7 +455,7 @@
 }
 
 .elang-play-button:hover {
-  background: #d2e3fc;
+  background: var(--elang-accent-strong-soft);
 }
 
 .elang-play-button:disabled {
@@ -410,6 +473,6 @@
 }
 
 .elang-play-button.elang-play-button-playing {
-  background: #d2e3fc;
-  box-shadow: 0 0 0 2px #a8c7fa;
+  background: var(--elang-accent-strong-soft);
+  box-shadow: 0 0 0 2px var(--elang-accent-ring);
 }

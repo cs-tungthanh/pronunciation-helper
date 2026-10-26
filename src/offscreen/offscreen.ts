@@ -22,10 +22,12 @@ function stopPlayback(): void {
 
 /**
  * Play one loaded or loading MP3 to the end
+ * @param speed Playback rate; the browser keeps the pitch
  */
-function playAudio(audio: HTMLAudioElement): Promise<SpeechStatus> {
+function playAudio(audio: HTMLAudioElement, speed: number): Promise<SpeechStatus> {
   return new Promise((resolve) => {
     currentAudio = audio;
+    audio.playbackRate = speed;
     finishCurrent = resolve;
     audio.onended = () => resolve('ended');
     audio.onerror = () => resolve('failed');
@@ -36,7 +38,7 @@ function playAudio(audio: HTMLAudioElement): Promise<SpeechStatus> {
 /**
  * Play chunk URLs back to back, replacing anything already playing
  */
-async function playUrls(urls: string[]): Promise<SpeechStatus> {
+async function playUrls(urls: string[], speed: number): Promise<SpeechStatus> {
   stopPlayback();
   const token = playToken;
 
@@ -47,7 +49,7 @@ async function playUrls(urls: string[]): Promise<SpeechStatus> {
     const audio = next;
     next = i + 1 < urls.length ? new Audio(urls[i + 1]) : null;
 
-    const status = await playAudio(audio);
+    const status = await playAudio(audio, speed);
     if (token !== playToken) return 'stopped';
     if (status !== 'ended') return status;
   }
@@ -59,7 +61,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.target !== OFFSCREEN_TARGET) return false;
 
   if (message.action === TTS_MESSAGES.OFFSCREEN_PLAY) {
-    playUrls(message.urls).then(status => sendResponse({ status }));
+    playUrls(message.urls, message.speed ?? 1).then(status => sendResponse({ status }));
     return true; // Respond when playback finishes
   }
 

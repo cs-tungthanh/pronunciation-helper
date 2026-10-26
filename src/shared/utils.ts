@@ -9,7 +9,13 @@ import {
   PopupMode,
   DEFAULT_DICTIONARY_SITE,
   DICTIONARY_SITES,
-  DictionarySite
+  DictionarySite,
+  DEFAULT_THEME,
+  THEMES,
+  Theme,
+  SPEECH_SPEEDS,
+  DEFAULT_SPEECH_SPEED,
+  DEFAULT_VOICE
 } from '../constants/app-constants';
 import { LOG_PREFIX } from '../constants/messages';
 
@@ -243,4 +249,89 @@ export async function saveShowCopyButton(show: boolean): Promise<void> {
   } catch (error) {
     console.error(`${LOG_PREFIX} Failed to save to storage:`, error);
   }
+}
+
+/**
+ * Get the speech speed (playback rate)
+ * @returns The stored speed, or normal speed when unset or unknown
+ */
+export async function getSpeechSpeed(): Promise<number> {
+  try {
+    const { speechSpeed } = await chrome.storage.local.get('speechSpeed');
+    const speeds: readonly number[] = SPEECH_SPEEDS;
+    return speeds.includes(speechSpeed) ? speechSpeed : DEFAULT_SPEECH_SPEED;
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to read storage:`, error);
+    return DEFAULT_SPEECH_SPEED;
+  }
+}
+
+/**
+ * Save the speech speed
+ */
+export async function saveSpeechSpeed(speed: number): Promise<void> {
+  try {
+    await chrome.storage.local.set({ speechSpeed: speed });
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to save to storage:`, error);
+  }
+}
+
+/**
+ * Get the voice: GOOGLE_VOICE, or a browser voice's voiceURI (which may not exist on this device)
+ * @returns The stored voice, or Google's voice when unset
+ */
+export async function getVoice(): Promise<string> {
+  try {
+    const { voice } = await chrome.storage.local.get('voice');
+    return typeof voice === 'string' && voice ? voice : DEFAULT_VOICE;
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to read storage:`, error);
+    return DEFAULT_VOICE;
+  }
+}
+
+/**
+ * Save the voice
+ */
+export async function saveVoice(voice: string): Promise<void> {
+  try {
+    await chrome.storage.local.set({ voice });
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to save to storage:`, error);
+  }
+}
+
+/**
+ * Get the color theme
+ * @returns The stored theme, or the default (match system) when unset or unknown
+ */
+export async function getTheme(): Promise<Theme> {
+  try {
+    const { theme } = await chrome.storage.local.get('theme');
+    const themes: readonly string[] = Object.values(THEMES);
+    return themes.includes(theme) ? theme : DEFAULT_THEME;
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to read storage:`, error);
+    return DEFAULT_THEME;
+  }
+}
+
+/**
+ * Save the color theme
+ */
+export async function saveTheme(theme: Theme): Promise<void> {
+  try {
+    await chrome.storage.local.set({ theme });
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to save to storage:`, error);
+  }
+}
+
+/**
+ * Whether a theme setting means dark right now ("system" follows the browser's preference)
+ */
+export function isDarkTheme(theme: Theme): boolean {
+  if (theme === THEMES.SYSTEM) return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  return theme === THEMES.DARK;
 }

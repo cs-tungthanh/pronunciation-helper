@@ -22,6 +22,14 @@ export function getOptionalElement<T extends HTMLElement>(id: string): T | null 
 }
 
 /**
+ * Apply the Theme setting to an extension page; its stylesheet reads data-theme
+ * ("system" leaves it to the page's prefers-color-scheme rules)
+ */
+export function applyPageTheme(theme: string): void {
+  document.documentElement.dataset.theme = theme;
+}
+
+/**
  * Initialize function when DOM is ready
  */
 export function onDOMReady(callback: () => void): void {

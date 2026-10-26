@@ -1,6 +1,8 @@
-/* Colors are taken from the duckling icon: leaf green for state, duck yellow as the one accent */
+/* Colors are taken from the duckling icon: leaf green for state, duck yellow as the one accent.
+   Light by default; dark when the system is dark (unless the Theme setting says light) or when
+   the setting says dark. popup.ts sets data-theme from the setting. */
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
   --paper: #ffffff;
   --mist: #f2f6ef;
   --line: #e3e9e0;
@@ -13,7 +15,8 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
     --paper: #17201a;
     --mist: #232e26;
     --line: #2c382f;
@@ -24,6 +27,19 @@
     --duck: #e9bf45;
     --focus: #5cc274;
   }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --paper: #17201a;
+  --mist: #232e26;
+  --line: #2c382f;
+  --ink: #e8efe9;
+  --muted: #9aa79e;
+  --leaf: #5cc274;
+  --leaf-soft: #1f3a27;
+  --duck: #e9bf45;
+  --focus: #5cc274;
 }
 
 * {
@@ -301,6 +317,54 @@ legend.setting-title + * {
 
 .setting-row .setting-title {
   margin-bottom: 0;
+}
+
+/* Theme: three icon buttons (system, light, dark) in a pill */
+.theme-switch {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--mist);
+}
+
+.theme-option {
+  position: relative;
+}
+
+.theme-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.theme-option label {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 28px;
+  border-radius: 999px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.theme-option label:hover {
+  color: var(--ink);
+}
+
+.theme-option input:checked + label {
+  background: var(--paper);
+  color: var(--leaf);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+
+.theme-option input:focus-visible + label {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.theme-option svg {
+  pointer-events: none;
 }
 
 /* One fixed width so the pickers line up */
