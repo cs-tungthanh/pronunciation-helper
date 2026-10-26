@@ -330,10 +330,12 @@
   margin-bottom: 8px;
 }
 
+/* Stacked so a long selection keeps the width */
 .elang-popup-source-actions {
   display: flex;
+  flex-direction: column;
   flex-shrink: 0;
-  gap: 4px;
+  gap: 6px;
 }
 
 .elang-popup-source .elang-popup-text {
