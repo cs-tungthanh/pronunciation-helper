@@ -84,6 +84,16 @@ export function createPopup(text: string, onClose: () => void, showCopy: boolean
     sourceRow.appendChild(actions);
     contentWrapper.appendChild(sourceRow);
 
+    // Buttons sit in a row beside a one-line selection and stack beside a longer one. Decided
+    // once, on the first layout with the buttons in a row, so the choice can't flip back and forth
+    const layoutObserver = new ResizeObserver(() => {
+      // The first report can come before the popup is on the page; wait for a real layout
+      if (textDisplay.clientWidth === 0) return;
+      layoutObserver.disconnect();
+      sourceRow.classList.toggle('elang-popup-source-stacked', countLines(textDisplay) > 1);
+    });
+    layoutObserver.observe(textDisplay);
+
     // The bubble is anchored to a word, so it closes when the word scrolls away
     textDisplay.addEventListener('scroll', wordBubble.close);
     contentWrapper.addEventListener('scroll', wordBubble.close);
@@ -209,6 +219,18 @@ function copyWithCommand(text: string): boolean {
     ranges.forEach((range) => selection?.addRange(range));
     if (focused instanceof HTMLElement) focused.focus({ preventScroll: true });
   }
+}
+
+/**
+ * How many lines an element's text wraps onto
+ */
+function countLines(element: HTMLElement): number {
+  const range = document.createRange();
+  range.selectNodeContents(element);
+
+  // Fragments on one line share a top, give or take a few pixels of padding on the word spans
+  const tops = Array.from(range.getClientRects(), (rect) => rect.top).sort((a, b) => a - b);
+  return tops.filter((top, i) => i === 0 || top - tops[i - 1] > 4).length;
 }
 
 /**
