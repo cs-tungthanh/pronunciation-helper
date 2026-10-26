@@ -40,14 +40,18 @@ pnpm run build:zip
 ### 3️⃣ Get Refresh Token
 
 ```bash
-# Set your credentials
-export CLIENT_ID="your-client-id.apps.googleusercontent.com"
-export CLIENT_SECRET="GOCSPX-your-secret"
+# Put your credentials in .env (gitignored)
+cat > .env <<'EOF'
+CLIENT_ID=your-client-id.apps.googleusercontent.com
+CLIENT_SECRET=GOCSPX-your-secret
+EXTENSION_ID=your-extension-id
+EOF
 
-# Run helper script
-node scripts/get-refresh-token.js
+# Open the printed URL and authorize; the script catches the redirect and prints REFRESH_TOKEN
+pnpm cws:token
 
-# Follow the prompts to authorize and get REFRESH_TOKEN
+# Add REFRESH_TOKEN=... to .env, then verify everything the CI upload step uses
+pnpm cws:check
 ```
 
 ### 4️⃣ Add GitHub Secrets

@@ -1,120 +1,134 @@
 #!/usr/bin/env node
 
 /**
- * Script to get Chrome Web Store API refresh token
+ * Chrome Web Store API credentials helper. Reads CLIENT_ID, CLIENT_SECRET,
+ * REFRESH_TOKEN and EXTENSION_ID from .env (or the environment).
  *
  * Usage:
- * 1. Set environment variables CLIENT_ID and CLIENT_SECRET
- * 2. Run: node scripts/get-refresh-token.js
- * 3. Follow the URL and authorize
- * 4. Copy the code from the redirect URL
- * 5. Paste it back here
+ *   node scripts/get-refresh-token.js check   Verify the credentials the CI upload step uses
+ *   node scripts/get-refresh-token.js         Get a new refresh token via the browser
+ *
+ * The new-token flow redirects to http://127.0.0.1:<PORT> (default 8085, override with PORT).
+ * A "Desktop app" OAuth client accepts any loopback port; a "Web application" client
+ * needs that exact URI added to its authorized redirect URIs.
  */
 
-import readline from 'readline';
-import https from 'https';
-import { URLSearchParams } from 'url';
+import http from 'http';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const CLIENT_ID = process.env.CLIENT_ID;
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
-
-if (!CLIENT_ID || !CLIENT_SECRET) {
-  console.error('❌ Please set CLIENT_ID and CLIENT_SECRET environment variables');
-  console.error('\nExample:');
-  console.error('export CLIENT_ID="your-client-id-here"');
-  console.error('export CLIENT_SECRET="your-client-secret-here"');
-  console.error('node scripts/get-refresh-token.js');
-  process.exit(1);
+const ENV_FILE = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '.env');
+if (fs.existsSync(ENV_FILE)) {
+  process.loadEnvFile(ENV_FILE);
 }
 
-const REDIRECT_URI = 'urn:ietf:wg:oauth:2.0:oob';
+const { CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN, EXTENSION_ID } = process.env;
+const PORT = Number(process.env.PORT || 8085);
+const REDIRECT_URI = `http://127.0.0.1:${PORT}`;
 const SCOPE = 'https://www.googleapis.com/auth/chromewebstore';
 
-// Step 1: Generate authorization URL
-const authUrl = `https://accounts.google.com/o/oauth2/auth?` +
-  `response_type=code&` +
-  `scope=${encodeURIComponent(SCOPE)}&` +
-  `client_id=${CLIENT_ID}&` +
-  `redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
-
-console.log('\n📋 Chrome Web Store API - Get Refresh Token\n');
-console.log('Step 1: Open this URL in your browser:\n');
-console.log('🔗', authUrl);
-console.log('\nStep 2: Sign in and authorize the application');
-console.log('Step 3: You\'ll see a code - copy it');
-console.log('Step 4: Paste the code here and press Enter\n');
-
-// Step 2: Get authorization code from user
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
-
-rl.question('Authorization code: ', async (code) => {
-  if (!code) {
-    console.error('❌ No code provided');
-    rl.close();
+function requireEnv(names) {
+  const missing = names.filter((name) => !process.env[name]);
+  if (missing.length) {
+    console.error(`❌ Missing ${missing.join(', ')}. Add them to .env, e.g.:\n`);
+    for (const name of missing) console.error(`${name}=...`);
     process.exit(1);
   }
+}
 
-  // Step 3: Exchange code for refresh token
-  const tokenParams = new URLSearchParams({
-    code: code.trim(),
-    client_id: CLIENT_ID,
-    client_secret: CLIENT_SECRET,
-    redirect_uri: REDIRECT_URI,
-    grant_type: 'authorization_code'
-  });
-
-  const options = {
-    hostname: 'oauth2.googleapis.com',
-    path: '/token',
+async function requestToken(params) {
+  const res = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Content-Length': tokenParams.toString().length
+    body: new URLSearchParams({ client_id: CLIENT_ID, client_secret: CLIENT_SECRET, ...params }),
+  });
+  return res.json();
+}
+
+async function check() {
+  requireEnv(['CLIENT_ID', 'CLIENT_SECRET', 'REFRESH_TOKEN', 'EXTENSION_ID']);
+
+  console.log('⏳ Exchanging refresh token for an access token...');
+  const token = await requestToken({ refresh_token: REFRESH_TOKEN, grant_type: 'refresh_token' });
+  if (token.error) {
+    console.error(`❌ ${token.error}: ${token.error_description || ''}`);
+    if (token.error === 'invalid_grant') {
+      console.error('   Refresh token expired or revoked. If the OAuth consent screen is in "Testing"');
+      console.error('   mode, tokens expire after 7 days: publish the app, then run this script without "check".');
+    } else if (token.error === 'invalid_client') {
+      console.error('   CLIENT_ID / CLIENT_SECRET are wrong (check for stray spaces or newlines).');
     }
-  };
+    process.exit(1);
+  }
+  console.log('✅ Credentials OK');
 
-  console.log('\n⏳ Exchanging code for tokens...\n');
+  console.log(`⏳ Reading extension ${EXTENSION_ID}...`);
+  const res = await fetch(
+    `https://www.googleapis.com/chromewebstore/v1.1/items/${EXTENSION_ID}?projection=DRAFT`,
+    { headers: { Authorization: `Bearer ${token.access_token}` } },
+  );
+  const item = await res.json();
+  if (!res.ok || item.error) {
+    console.error(`❌ HTTP ${res.status}:`, JSON.stringify(item.error || item, null, 2));
+    console.error('   Check EXTENSION_ID, that the Chrome Web Store API is enabled in the same Google');
+    console.error('   Cloud project, and that you authorized with the account that owns the extension.');
+    process.exit(1);
+  }
+  console.log('✅ Extension found:', JSON.stringify(item, null, 2));
+}
 
-  const req = https.request(options, (res) => {
-    let data = '';
+function getNewToken() {
+  requireEnv(['CLIENT_ID', 'CLIENT_SECRET']);
 
-    res.on('data', (chunk) => {
-      data += chunk;
-    });
+  const authUrl = 'https://accounts.google.com/o/oauth2/auth?' + new URLSearchParams({
+    response_type: 'code',
+    scope: SCOPE,
+    client_id: CLIENT_ID,
+    redirect_uri: REDIRECT_URI,
+    access_type: 'offline',
+    prompt: 'consent',
+  });
 
-    res.on('end', () => {
-      try {
-        const result = JSON.parse(data);
-
-        if (result.error) {
-          console.error('❌ Error:', result.error_description || result.error);
-        } else if (result.refresh_token) {
-          console.log('✅ Success! Here are your tokens:\n');
-          console.log('REFRESH_TOKEN:', result.refresh_token);
-          console.log('\n📝 Save these in your GitHub Secrets:');
-          console.log('- EXTENSION_ID: (get from Chrome Web Store dashboard)');
-          console.log('- CLIENT_ID:', CLIENT_ID);
-          console.log('- CLIENT_SECRET:', CLIENT_SECRET);
-          console.log('- REFRESH_TOKEN:', result.refresh_token);
-          console.log('\n⚠️  Keep the refresh token secure and never commit it to your repository!');
-        } else {
-          console.error('❌ No refresh token received. Response:', data);
-        }
-      } catch (e) {
-        console.error('❌ Failed to parse response:', data);
+  const server = http.createServer(async (req, res) => {
+    const params = new URL(req.url, REDIRECT_URI).searchParams;
+    const code = params.get('code');
+    if (!code) {
+      res.end(params.get('error') ? `Authorization failed: ${params.get('error')}` : 'Waiting for authorization...');
+      if (params.get('error')) {
+        console.error('❌ Authorization failed:', params.get('error'));
+        server.close();
+        process.exitCode = 1;
       }
-      rl.close();
-    });
+      return;
+    }
+
+    res.end('Done. You can close this tab and go back to the terminal.');
+    server.close();
+
+    const result = await requestToken({ code, redirect_uri: REDIRECT_URI, grant_type: 'authorization_code' });
+    if (!result.refresh_token) {
+      console.error('❌ No refresh token received:', JSON.stringify(result));
+      process.exitCode = 1;
+      return;
+    }
+    console.log('\n✅ New refresh token:\n');
+    console.log(result.refresh_token);
+    console.log('\n📝 Put it in .env as REFRESH_TOKEN and in the GitHub secret REFRESH_TOKEN,');
+    console.log('   then run: node scripts/get-refresh-token.js check');
   });
 
-  req.on('error', (e) => {
+  server.listen(PORT, '127.0.0.1', () => {
+    console.log('\n📋 Open this URL and sign in with the account that owns the extension:\n');
+    console.log(authUrl);
+    console.log(`\n⏳ Waiting for the redirect to ${REDIRECT_URI} ...`);
+  });
+}
+
+if (process.argv[2] === 'check') {
+  check().catch((e) => {
     console.error('❌ Request failed:', e.message);
-    rl.close();
+    process.exit(1);
   });
-
-  req.write(tokenParams.toString());
-  req.end();
-});
+} else {
+  getNewToken();
+}
