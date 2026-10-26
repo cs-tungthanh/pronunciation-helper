@@ -287,3 +287,35 @@ input:disabled + .slider {
 .preview-btn:active {
   transform: scale(0.98);
 }
+
+/* Star footer */
+.star-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 20px;
+  padding: 20px 30px;
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 2px 4px var(--shadow);
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.star-btn {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  color: var(--heading);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.star-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
