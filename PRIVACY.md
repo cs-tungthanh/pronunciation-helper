@@ -15,7 +15,7 @@ Sayly is a Chrome extension that helps users learn English pronunciation. We are
 The extension runs in your browser and only contacts the services listed under Third-Party Services:
 
 1. **Text Selection**: When you select text on a webpage, the extension processes it locally in your browser
-2. **IPA Notation**: The extension fetches phonetic data from the Free Dictionary API (dictionaryapi.dev) for the word you click (or the single word you select) - no user information is sent
+2. **IPA Notation**: Pronunciations come from a dictionary built into the extension, so looking up a word normally sends nothing. Only for a word that dictionary doesn't have, the word is sent to the Free Dictionary API (dictionaryapi.dev) - no user information is sent
 3. **Translation** (optional): Translation is on by default (Vietnamese). The selected text is sent to Google Translate, or to MyMemory if Google fails, to translate it. Turn translation off in Settings to stop this
 4. **Text-to-Speech**: When you press play, the text being spoken is sent to Google Translate's text-to-speech service to get the audio. If that fails, your browser's built-in speech synthesis is used instead, which runs locally
 5. **No Tracking**: We don't track your usage, selections, or browsing activity
@@ -36,7 +36,7 @@ These permissions are used solely to provide the pronunciation functionality and
 ## Third-Party Services
 
 The extension makes requests to:
-- **Free Dictionary API** (dictionaryapi.dev): To fetch IPA phonetic notation for words
+- **Free Dictionary API** (dictionaryapi.dev): To fetch IPA phonetic notation for words missing from the built-in dictionary
   - Only the word itself is sent
   - No user information or identifiers are included
   - This is a public API that doesn't require authentication

@@ -1,9 +1,11 @@
 /**
- * Dictionary API client for fetching IPA phonetic transcriptions (runs in the background service worker)
+ * IPA lookup (runs in the background service worker): the bundled dictionary first,
+ * then the online dictionary API for words it can't pronounce
  */
 
 import { DICTIONARY_API_BASE_URL, IPA_CACHE_SIZE } from '../constants/app-constants';
 import { PromiseCache } from '../shared/promise-cache';
+import { lookupBundledIpa } from './cmudict';
 import { extractWords } from '../text/text-processor';
 
 const ipaCache = new PromiseCache<string | null>(IPA_CACHE_SIZE);
@@ -37,10 +39,18 @@ async function fetchIPA(word: string): Promise<string | null> {
 }
 
 /**
- * Cached IPA for one word; failures read as "no IPA"
+ * IPA for one word; failures read as "no IPA"
  */
 async function getIPA(word: string): Promise<string | null> {
   const key = word.toLowerCase();
+
+  try {
+    const bundled = await lookupBundledIpa(key);
+    if (bundled) return bundled;
+  } catch (error) {
+    console.error('[Dictionary] Failed to load the bundled dictionary:', error);
+  }
+
   try {
     return await ipaCache.get(key, () => fetchIPA(key));
   } catch (error) {

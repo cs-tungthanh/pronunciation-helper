@@ -14,6 +14,10 @@ function copyExtensionFiles(): Plugin {
       copyFileSync('src/options/options.css', 'dist/options.css')
       copyFileSync('src/popup/popup.css', 'dist/popup.css')
 
+      // Bundled pronunciation dictionary and its license (which must ship with it)
+      copyFileSync('src/data/cmudict-ipa.txt', 'dist/cmudict-ipa.txt')
+      copyFileSync('src/data/CMUDICT-LICENSE', 'dist/CMUDICT-LICENSE.txt')
+
       // Copy HTML files
       copyFileSync('src/options/options.html', 'dist/options.html')
       copyFileSync('src/popup/popup.html', 'dist/popup.html')

@@ -148,7 +148,7 @@ pnpm run version:major  # 1.0.0 -> 2.0.0
 - **TypeScript** - Type-safe development
 - **Vite** - Fast build tooling
 - **Web Speech API** - Browser-native text-to-speech
-- **Free Dictionary API** - IPA phonetic data
+- **CMU Pronouncing Dictionary** - Bundled IPA data, with the Free Dictionary API as a fallback
 - **Manifest V3** - Latest Chrome extension standard
 
 ### Key Technologies
@@ -160,10 +160,10 @@ pnpm run version:major  # 1.0.0 -> 2.0.0
 - No external API calls for audio
 
 **IPA Data**
-- Fetched from [Free Dictionary API](https://dictionaryapi.dev/)
-- Parallel requests for multiple words
-- Automatic deduplication
-- Graceful handling of missing data
+- Bundled [CMU Pronouncing Dictionary](https://github.com/cmusphinx/cmudict) (~126,000 words, American English), converted to IPA by `scripts/build-cmudict.js` (`pnpm cmudict` rebuilds `src/data/cmudict-ipa.txt`)
+- Inflected forms it doesn't list are worked out from the base word: -ed is /t/, /d/ or /ɪd/, -s is /s/, /z/ or /ɪz/, -ing is /ɪŋ/
+- Words still unknown fall back to the [Free Dictionary API](https://dictionaryapi.dev/)
+- Lookups are cached in the background worker
 
 **Contraction Expansion**
 - 70+ common contractions supported
@@ -197,7 +197,7 @@ User selects text
     ↓
 Extract words & expand contractions
     ↓
-Fetch IPA data in parallel (Free Dictionary API)
+Look up IPA (bundled dictionary, then Free Dictionary API)
     ↓
 Create popup with IPA cards
     ↓
@@ -343,18 +343,17 @@ Future enhancements being considered:
 - [ ] Export/save pronunciations
 - [ ] Dark mode support
 - [ ] Multiple language support
-- [ ] Offline IPA dictionary
 
 ## FAQ
 
 **Q: Why doesn't it work for some words?**
-A: The Free Dictionary API has limited coverage. Common words usually have IPA data, but specialized vocabulary may not be available.
+A: IPA comes from the bundled CMU Pronouncing Dictionary, which covers about 126,000 words and their -ed, -s and -ing forms. Very new words, slang and some names may be missing; for those the Free Dictionary API is tried.
 
 **Q: Can I use a different voice?**
 A: Currently uses the first available en-US voice. Future versions will add voice selection.
 
 **Q: Does it work offline?**
-A: Audio works offline using browser voices. IPA data requires internet connection.
+A: IPA works offline for words in the bundled dictionary. Audio uses Google's voice online and falls back to browser voices offline. Translation needs an internet connection.
 
 **Q: Why does the button blink sometimes?**
 A: Voices may not be fully loaded. Wait a moment and try again, or refresh the page.
@@ -368,6 +367,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
+- [CMU Pronouncing Dictionary](https://github.com/cmusphinx/cmudict) for pronunciation data, Copyright (C) 1993-2015 Carnegie Mellon University; its license ships with the extension as `CMUDICT-LICENSE.txt`
 - [Free Dictionary API](https://dictionaryapi.dev/) for IPA phonetic data
 - [Web Speech API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API) for text-to-speech
 - All the language learners who inspired this project
