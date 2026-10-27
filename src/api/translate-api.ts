@@ -10,12 +10,13 @@ import {
   MYMEMORY_TRANSLATE_URL,
   MYMEMORY_MAX_CHARS,
   TRANSLATION_MAX_CHARS,
-  TRANSLATION_SOURCE_LANG,
+  ENGLISH_LANG,
+  VIETNAMESE_LANG,
   DICTIONARY_MAX_MEANINGS,
   TRANSLATION_CACHE_SIZE
 } from '../constants/app-constants';
 import { PromiseCache } from '../shared/promise-cache';
-import { isValidSingleWord } from '../text/text-processor';
+import { isValidSingleWord, isVietnamese } from '../text/text-processor';
 
 /** One part of speech for a single word, e.g. noun → ["gian kế", "hành động"] */
 export interface DictionaryEntry {
@@ -32,6 +33,12 @@ export interface TranslationResult {
 
 type GoogleTranslation = Pick<TranslationResult, 'text' | 'dictionary'>;
 
+/** Which language to translate from and into */
+interface LanguagePair {
+  from: string;
+  to: string;
+}
+
 const translationCache = new PromiseCache<TranslationResult>(TRANSLATION_CACHE_SIZE);
 
 // Index into GOOGLE_TRANSLATE_CLIENTS of the client string that last answered
@@ -40,14 +47,18 @@ let googleClientIndex = 0;
 /**
  * Translate with Google's undocumented endpoint using one client string
  */
-async function translateWithGoogleClient(text: string, to: string, client: string): Promise<GoogleTranslation> {
+async function translateWithGoogleClient(
+  text: string,
+  { from, to }: LanguagePair,
+  client: string
+): Promise<GoogleTranslation> {
   const url = new URL(GOOGLE_TRANSLATE_URL);
   url.searchParams.set('client', client);
-  url.searchParams.set('sl', TRANSLATION_SOURCE_LANG);
+  url.searchParams.set('sl', from);
   url.searchParams.set('tl', to);
   url.searchParams.set('dt', 't');
   // Dictionary entries (part of speech + meanings) only make sense for one word
-  if (isValidSingleWord(text)) url.searchParams.append('dt', 'bd');
+  if (isSingleWord(text, from)) url.searchParams.append('dt', 'bd');
   url.searchParams.set('q', text);
 
   const response = await fetch(url.toString(), { credentials: 'omit' });
@@ -71,6 +82,13 @@ async function translateWithGoogleClient(text: string, to: string, client: strin
 }
 
 /**
+ * Whether text is one word, so Google can list its meanings; a Vietnamese word may carry accents
+ */
+function isSingleWord(text: string, from: string): boolean {
+  return from === VIETNAMESE_LANG ? /^[\p{L}'-]+$/u.test(text) : isValidSingleWord(text);
+}
+
+/**
  * Read dictionary entries from a dt=bd response
  * Shape: data[1] = [["noun", ["meaning", ...], ...], ...]
  */
@@ -91,12 +109,12 @@ function parseGoogleDictionary(data: unknown): DictionaryEntry[] {
  * Translate with Google, rotating to the next client string when one is refused.
  * Google gates the endpoint per client value, so the one that answered is remembered.
  */
-async function translateWithGoogle(text: string, to: string): Promise<GoogleTranslation> {
+async function translateWithGoogle(text: string, languages: LanguagePair): Promise<GoogleTranslation> {
   let lastError: unknown = null;
 
   for (let attempt = 0; attempt < GOOGLE_TRANSLATE_CLIENTS.length; attempt++) {
     try {
-      return await translateWithGoogleClient(text, to, GOOGLE_TRANSLATE_CLIENTS[googleClientIndex]);
+      return await translateWithGoogleClient(text, languages, GOOGLE_TRANSLATE_CLIENTS[googleClientIndex]);
     } catch (error) {
       lastError = error;
       googleClientIndex = (googleClientIndex + 1) % GOOGLE_TRANSLATE_CLIENTS.length;
@@ -109,12 +127,12 @@ async function translateWithGoogle(text: string, to: string): Promise<GoogleTran
 /**
  * Translate with MyMemory (free, ~5k words/day, 500 chars per request)
  */
-async function translateWithMyMemory(text: string, to: string): Promise<string> {
+async function translateWithMyMemory(text: string, { from, to }: LanguagePair): Promise<string> {
   if (text.length > MYMEMORY_MAX_CHARS) {
     throw new Error(`MyMemory accepts at most ${MYMEMORY_MAX_CHARS} characters`);
   }
 
-  const params = new URLSearchParams({ q: text, langpair: `${TRANSLATION_SOURCE_LANG}|${to}` });
+  const params = new URLSearchParams({ q: text, langpair: `${from}|${to}` });
   const response = await fetch(`${MYMEMORY_TRANSLATE_URL}?${params}`, { credentials: 'omit' });
   if (!response.ok) throw new Error(`MyMemory HTTP ${response.status}`);
 
@@ -130,26 +148,31 @@ async function translateWithMyMemory(text: string, to: string): Promise<string> 
 }
 
 /**
- * Translate English text into the target language, reusing earlier results
+ * Translate English text into the target language, or Vietnamese text into English, reusing
+ * earlier results
  * @throws Error when the text is too long or every provider fails
  */
 export function translate(text: string, to: string): Promise<TranslationResult> {
-  return translationCache.get(`${to}\n${text}`, () => translateUncached(text, to));
+  const languages: LanguagePair = isVietnamese(text)
+    ? { from: VIETNAMESE_LANG, to: ENGLISH_LANG }
+    : { from: ENGLISH_LANG, to };
+  const key = `${languages.from}|${languages.to}\n${text}`;
+  return translationCache.get(key, () => translateUncached(text, languages));
 }
 
 /**
  * Translate with Google, falling back to MyMemory
  */
-async function translateUncached(text: string, to: string): Promise<TranslationResult> {
+async function translateUncached(text: string, languages: LanguagePair): Promise<TranslationResult> {
   if (text.length > TRANSLATION_MAX_CHARS) {
     throw new Error(`Text is longer than ${TRANSLATION_MAX_CHARS} characters`);
   }
 
   try {
-    return { ...(await translateWithGoogle(text, to)), provider: 'google' };
+    return { ...(await translateWithGoogle(text, languages)), provider: 'google' };
   } catch (googleError) {
     console.warn('[Translate API] Google failed, falling back to MyMemory:', googleError);
   }
 
-  return { text: await translateWithMyMemory(text, to), provider: 'mymemory', dictionary: [] };
+  return { text: await translateWithMyMemory(text, languages), provider: 'mymemory', dictionary: [] };
 }

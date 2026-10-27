@@ -18,6 +18,7 @@ import type { IconNode } from 'lucide';
 import { speechService } from '../speech/speech-service';
 import { getDictionarySite } from '../shared/utils';
 import { cachedSetting } from '../shared/settings-cache';
+import { isVietnamese } from '../text/text-processor';
 
 const readDictionarySite = cachedSetting('dictionarySite', getDictionarySite);
 
@@ -54,8 +55,10 @@ export function createPopup(text: string, onClose: () => void, showCopy: boolean
   contentWrapper.className = 'elang-popup-content-wrapper';
   popup.appendChild(contentWrapper);
 
-  const singleWord = text.match(SINGLE_WORD_PATTERN)?.[1];
-  speechService.warmUp();
+  // Vietnamese text has no English pronunciation to show: it is only translated, into English
+  const vietnamese = isVietnamese(text);
+  const singleWord = vietnamese ? undefined : text.match(SINGLE_WORD_PATTERN)?.[1];
+  if (!vietnamese) speechService.warmUp();
 
   // Copies what is hard to select by hand: a word with its IPA, or the text with its translation
   let ipa: string | null = null;
@@ -70,9 +73,9 @@ export function createPopup(text: string, onClose: () => void, showCopy: boolean
     // One word: show its IPA, play and dictionary link, like the bubble a clicked word opens
     contentWrapper.appendChild(createWordHeader(singleWord, copyButton, (found) => (ipa = found)));
   } else {
-    // Several words: each word opens its pronunciation bubble
-    const wordBubble = createWordBubble(popup);
-    const textDisplay = createTextDisplay(text, wordBubble.toggle);
+    // Several words: each word opens its pronunciation bubble; Vietnamese is shown as plain text
+    const wordBubble = vietnamese ? null : createWordBubble(popup);
+    const textDisplay = wordBubble ? createTextDisplay(text, wordBubble.toggle) : createPlainText(text);
     const sourceRow = document.createElement('div');
     sourceRow.className = 'elang-popup-source';
     sourceRow.appendChild(textDisplay);
@@ -80,9 +83,9 @@ export function createPopup(text: string, onClose: () => void, showCopy: boolean
     // Play and copy buttons beside the text
     const actions = document.createElement('div');
     actions.className = 'elang-popup-source-actions';
-    actions.appendChild(createPlayButton(text));
+    if (!vietnamese) actions.appendChild(createPlayButton(text));
     if (copyButton) actions.appendChild(copyButton);
-    sourceRow.appendChild(actions);
+    if (actions.childElementCount > 0) sourceRow.appendChild(actions);
     contentWrapper.appendChild(sourceRow);
 
     // Buttons sit in a row beside a one-line selection and stack beside a longer one. Decided
@@ -95,17 +98,19 @@ export function createPopup(text: string, onClose: () => void, showCopy: boolean
     });
     layoutObserver.observe(textDisplay);
 
-    // The bubble is anchored to a word, so it closes when the word scrolls away
-    textDisplay.addEventListener('scroll', wordBubble.close);
-    contentWrapper.addEventListener('scroll', wordBubble.close);
+    if (wordBubble) {
+      // The bubble is anchored to a word, so it closes when the word scrolls away
+      textDisplay.addEventListener('scroll', wordBubble.close);
+      contentWrapper.addEventListener('scroll', wordBubble.close);
 
-    // Clicking anywhere else in the popup dismisses the bubble
-    popup.addEventListener('click', (e) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest('.elang-popup-word, .elang-popup-word-bubble')) {
-        wordBubble.close();
-      }
-    });
+      // Clicking anywhere else in the popup dismisses the bubble
+      popup.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        if (!target.closest('.elang-popup-word, .elang-popup-word-bubble')) {
+          wordBubble.close();
+        }
+      });
+    }
   }
 
   // Placeholder keeps the layout stable while the translation is in flight
@@ -273,6 +278,16 @@ function createDragHandle(onClose: () => void): HTMLElement {
   dragHandle.appendChild(closeButton);
 
   return dragHandle;
+}
+
+/**
+ * Create a text display without clickable words
+ */
+function createPlainText(text: string): HTMLElement {
+  const textDiv = document.createElement('div');
+  textDiv.className = 'elang-popup-text';
+  textDiv.textContent = text;
+  return textDiv;
 }
 
 /**

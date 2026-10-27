@@ -16,7 +16,9 @@ export const MYMEMORY_MAX_CHARS = 500;
 export const TRANSLATION_MAX_CHARS = 5000;
 // Longer selections are cut to this, so the popup stays quick to build and can still be translated
 export const SELECTION_MAX_CHARS = TRANSLATION_MAX_CHARS;
-export const TRANSLATION_SOURCE_LANG = 'en';
+export const ENGLISH_LANG = 'en';
+// Selected Vietnamese text is translated into English instead of into the chosen language
+export const VIETNAMESE_LANG = 'vi';
 export const DICTIONARY_MAX_MEANINGS = 5;
 export const TRANSLATION_OFF = 'off';
 export const DEFAULT_TARGET_LANGUAGE = 'vi';
