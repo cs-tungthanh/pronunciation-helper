@@ -182,8 +182,14 @@ async function renderVoice(elements: OptionsElements): Promise<void> {
     return;
   }
 
-  const [voices, current] = await Promise.all([speechService.getEnglishVoices(), getVoice()]);
-  select.appendChild(new Option(UI_LABELS.VOICE_AUTO, AUTO_VOICE));
+  const [voices, autoVoice, current] = await Promise.all([
+    speechService.getEnglishVoices(),
+    speechService.getAutoVoice(),
+    getVoice()
+  ]);
+  // Name the voice Automatic plays in this browser, without the language suffix ("… - English (United States)")
+  const autoName = autoVoice ? autoVoice.name.split(' - ')[0] : UI_LABELS.VOICE_GOOGLE;
+  select.appendChild(new Option(`${UI_LABELS.VOICE_AUTO}: ${autoName}`, AUTO_VOICE));
   select.appendChild(new Option(UI_LABELS.VOICE_GOOGLE, GOOGLE_VOICE));
   voices.forEach(voice => {
     select.appendChild(new Option(`${voice.name} (${voice.lang})`, voice.voiceURI));

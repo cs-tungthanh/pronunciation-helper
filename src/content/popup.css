@@ -209,8 +209,8 @@
 .elang-popup-text {
   margin-bottom: 8px;
   color: var(--elang-text);
+  white-space: pre-line;
   word-wrap: break-word;
-  font-size: 13px;
   max-height: 100px;
   overflow-y: auto;
   padding: 4px;
@@ -240,64 +240,26 @@
   border-bottom-color: var(--elang-accent);
 }
 
-/* Small bubble with one word's IPA, anchored under the clicked word */
+/* Bubble with a clicked word's IPA, anchored under the word. It stays inside the popup;
+   a long IPA wraps under the word instead of being cut off */
 .elang-popup-word-bubble {
   position: absolute;
   z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  box-sizing: border-box;
   max-width: calc(100% - 12px);
   padding: 6px 6px 6px 10px;
   background: var(--elang-surface);
   border: 1px solid var(--elang-accent-strong-soft);
   border-radius: 6px;
   box-shadow: 0 4px 12px var(--elang-shadow);
-  white-space: nowrap;
 }
 
 .elang-popup-word-bubble[hidden] {
   display: none;
 }
 
-.elang-popup-word-bubble-word {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--elang-text-muted);
-}
-
-.elang-popup-word-bubble-ipa {
-  font-family: 'Lucida Sans Unicode', 'Arial Unicode MS', sans-serif;
-  font-size: 14px;
-  color: var(--elang-accent);
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.elang-popup-word-bubble-ipa.elang-popup-word-bubble-pending {
-  color: var(--elang-placeholder);
-  font-size: 12px;
-}
-
-.elang-popup-word-bubble-speak,
-.elang-popup-word-bubble-link {
-  flex-shrink: 0;
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: var(--elang-accent-soft);
-  color: var(--elang-accent);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.elang-popup-word-bubble-speak:hover,
-.elang-popup-word-bubble-link:hover {
-  background: var(--elang-accent-strong-soft);
+.elang-popup-word-bubble .elang-popup-word-header {
+  margin-bottom: 0;
 }
 
 .elang-popup-text::-webkit-scrollbar {
@@ -321,6 +283,7 @@
 .elang-popup-translation {
   margin-bottom: 8px;
   color: var(--elang-text);
+  white-space: pre-line;
   word-wrap: break-word;
   font-size: 14px;
   max-height: 180px;
@@ -369,8 +332,7 @@
 }
 
 .elang-popup-word-header-word {
-  font-size: 15px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--elang-text);
   word-break: break-word;
 }
@@ -379,9 +341,10 @@
   font-family: 'Lucida Sans Unicode', 'Arial Unicode MS', sans-serif;
   font-size: 14px;
   color: var(--elang-accent);
+  overflow-wrap: anywhere;
 }
 
-.elang-popup-word-header-ipa.elang-popup-word-bubble-pending {
+.elang-popup-word-header-ipa.elang-popup-word-header-pending {
   color: var(--elang-placeholder);
   font-size: 12px;
 }

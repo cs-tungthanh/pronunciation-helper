@@ -9,6 +9,7 @@ export const TTS_MESSAGES = {
   // Content script → background
   SPEAK: 'tts-speak',
   STOP: 'tts-stop',
+  PRELOAD: 'tts-preload',
   // Background → offscreen document
   OFFSCREEN_PLAY: 'tts-offscreen-play',
   OFFSCREEN_STOP: 'tts-offscreen-stop'

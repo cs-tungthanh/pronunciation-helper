@@ -69,6 +69,9 @@ export const MESSAGE_ACTIONS = {
 // Background caches for repeated lookups (entries; the service worker's memory is dropped when it idles out)
 export const TRANSLATION_CACHE_SIZE = 200;
 export const IPA_CACHE_SIZE = 500;
+// Downloaded Google TTS audio (one entry per chunk and speed), kept this long for replays
+export const TTS_AUDIO_CACHE_SIZE = 100;
+export const TTS_AUDIO_CACHE_TTL_MS = 10 * 60 * 1000;
 
 // CSS Classes
 export const POPUP_CSS_CLASS = 'elang-pronunciation-popup';

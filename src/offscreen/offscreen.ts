@@ -21,7 +21,7 @@ function stopPlayback(): void {
 }
 
 /**
- * Play one loaded or loading MP3 to the end
+ * Play one MP3 to the end
  * @param speed Playback rate; the browser keeps the pitch
  */
 function playAudio(audio: HTMLAudioElement, speed: number): Promise<SpeechStatus> {
@@ -36,13 +36,14 @@ function playAudio(audio: HTMLAudioElement, speed: number): Promise<SpeechStatus
 }
 
 /**
- * Play chunk URLs back to back, replacing anything already playing
+ * Play chunks back to back, replacing anything already playing
+ * @param urls The chunks: cached audio as data URLs, or Google URLs that play while they download
  */
 async function playUrls(urls: string[], speed: number): Promise<SpeechStatus> {
   stopPlayback();
   const token = playToken;
 
-  // new Audio(url) starts downloading, so each chunk is fetched while the previous one plays
+  // Each chunk is loaded while the previous one plays
   let next: HTMLAudioElement | null = urls.length > 0 ? new Audio(urls[0]) : null;
 
   for (let i = 0; next; i++) {

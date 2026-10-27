@@ -55,6 +55,7 @@ export function createPopup(text: string, onClose: () => void, showCopy: boolean
   popup.appendChild(contentWrapper);
 
   const singleWord = text.match(SINGLE_WORD_PATTERN)?.[1];
+  speechService.warmUp();
 
   // Copies what is hard to select by hand: a word with its IPA, or the text with its translation
   let ipa: string | null = null;
@@ -66,7 +67,7 @@ export function createPopup(text: string, onClose: () => void, showCopy: boolean
     : null;
 
   if (singleWord) {
-    // One word: show its IPA, play and dictionary link inline, like the word bubble
+    // One word: show its IPA, play and dictionary link, like the bubble a clicked word opens
     contentWrapper.appendChild(createWordHeader(singleWord, copyButton, (found) => (ipa = found)));
   } else {
     // Several words: each word opens its pronunciation bubble
@@ -342,7 +343,7 @@ function pointDictionaryLink(link: HTMLAnchorElement, word: string): void {
 function createWordHeader(
   word: string,
   copyButton: HTMLElement | null,
-  onIpa: (ipa: string | null) => void
+  onIpa?: (ipa: string | null) => void
 ): HTMLElement {
   const header = document.createElement('div');
   header.className = 'elang-popup-word-header';
@@ -352,12 +353,12 @@ function createWordHeader(
   wordLabel.textContent = word;
 
   const ipaLabel = document.createElement('span');
-  ipaLabel.className = 'elang-popup-word-header-ipa elang-popup-word-bubble-pending';
+  ipaLabel.className = 'elang-popup-word-header-ipa elang-popup-word-header-pending';
   ipaLabel.textContent = UI_LABELS.LOOKING_UP;
   requestWordIpa(word).then((ipa) => {
-    onIpa(ipa);
     ipaLabel.textContent = ipa || UI_LABELS.NO_IPA;
-    ipaLabel.classList.remove('elang-popup-word-bubble-pending');
+    ipaLabel.classList.remove('elang-popup-word-header-pending');
+    onIpa?.(ipa);
   });
 
   const details = document.createElement('div');
@@ -374,46 +375,27 @@ function createWordHeader(
 }
 
 /**
- * Create the small bubble that shows one word's IPA under the clicked word
+ * Create the small bubble that shows a clicked word under it, with the same layout as a single
+ * selected word: the IPA sits beside the word when there is room and wraps under it when not
  */
 function createWordBubble(popup: HTMLElement) {
   const bubble = document.createElement('div');
   bubble.className = 'elang-popup-word-bubble';
   bubble.hidden = true;
-
-  const wordLabel = document.createElement('span');
-  wordLabel.className = 'elang-popup-word-bubble-word';
-
-  const ipaLabel = document.createElement('span');
-  ipaLabel.className = 'elang-popup-word-bubble-ipa';
-
-  const speakButton = document.createElement('button');
-  speakButton.className = 'elang-popup-word-bubble-speak';
-  setButtonIcon(speakButton, ICONS.SPEAK, 15, UI_LABELS.PLAY_WORD_TOOLTIP);
-
-  const dictionaryLink = createDictionaryLink('elang-popup-word-bubble-link', 14);
-
-  bubble.appendChild(wordLabel);
-  bubble.appendChild(ipaLabel);
-  bubble.appendChild(speakButton);
-  bubble.appendChild(dictionaryLink);
   popup.appendChild(bubble);
 
-  // Each word is requested once per popup (the background also caches across popups)
-  const ipaCache = new Map<string, Promise<string | null>>();
   let activeWord: HTMLElement | null = null;
-
-  speakButton.addEventListener('click', () => {
-    if (activeWord?.textContent) speechService.speak(activeWord.textContent);
-  });
 
   const close = () => {
     activeWord?.classList.remove('elang-popup-word-active');
     activeWord = null;
     bubble.hidden = true;
+    bubble.replaceChildren();
   };
 
   const position = (wordElement: HTMLElement) => {
+    // Measured from the left edge, so its width isn't squeezed by where it was last
+    bubble.style.left = '0px';
     const popupRect = popup.getBoundingClientRect();
     const wordRect = wordElement.getBoundingClientRect();
     const maxLeft = popup.clientWidth - bubble.offsetWidth - WORD_BUBBLE_GAP_PX;
@@ -423,28 +405,18 @@ function createWordBubble(popup: HTMLElement) {
   };
 
   const open = (wordElement: HTMLElement) => {
-    const word = wordElement.textContent || '';
-    const key = word.toLowerCase();
-
     activeWord?.classList.remove('elang-popup-word-active');
     activeWord = wordElement;
     wordElement.classList.add('elang-popup-word-active');
 
-    wordLabel.textContent = word;
-    pointDictionaryLink(dictionaryLink, word);
-    ipaLabel.textContent = UI_LABELS.LOOKING_UP;
-    ipaLabel.classList.add('elang-popup-word-bubble-pending');
+    // The bubble changes size when the IPA arrives; the background caches it, so reopening is quick
+    bubble.replaceChildren(
+      createWordHeader(wordElement.textContent || '', null, () => {
+        if (activeWord === wordElement) position(wordElement);
+      })
+    );
     bubble.hidden = false;
     position(wordElement);
-
-    if (!ipaCache.has(key)) ipaCache.set(key, requestWordIpa(word));
-    ipaCache.get(key)!.then((ipa) => {
-      // Ignore results for a word the user has already moved away from
-      if (activeWord !== wordElement) return;
-      ipaLabel.textContent = ipa || UI_LABELS.NO_IPA;
-      ipaLabel.classList.remove('elang-popup-word-bubble-pending');
-      position(wordElement);
-    });
   };
 
   const toggle = (wordElement: HTMLElement) => {

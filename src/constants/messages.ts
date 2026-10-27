@@ -46,7 +46,7 @@ export const UI_LABELS = {
   MODE_IMMEDIATE_HINT: 'The popup opens as soon as you select text.',
   MODE_ICON_HINT: 'A small icon appears by the selection. Click it to open the popup.',
   MODE_NONE_HINT: 'Nothing appears when you select text.',
-  VOICE_AUTO: 'Automatic (Microsoft natural voice, else Google)',
+  VOICE_AUTO: 'Automatic',
   VOICE_GOOGLE: 'Google',
   SPEED_NORMAL: 'Normal',
 } as const;

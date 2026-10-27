@@ -37,11 +37,14 @@ class SpeechService {
   private lastWasSlow = false;
   private lastSpokenAt = 0;
 
+  // Shared by every caller, so a browser that never reports voices (common on Linux) costs the timeout once
+  private voicesLoaded: Promise<void> | null = null;
+
   /**
-   * Wait for browser voices to load, with a timeout (needed only by the fallback, so loaded on first use)
+   * Wait for browser voices to load, with a timeout (needed only by browser voices, so loaded on first use)
    */
   private ensureVoicesLoaded(): Promise<void> {
-    return new Promise((resolve) => {
+    this.voicesLoaded ??= new Promise((resolve) => {
       if (!('speechSynthesis' in window) || speechSynthesis.getVoices().length > 0) {
         resolve();
         return;
@@ -61,6 +64,7 @@ class SpeechService {
         resolve();
       }, VOICE_LOAD_TIMEOUT_MS);
     });
+    return this.voicesLoaded;
   }
 
   /**
@@ -81,11 +85,21 @@ class SpeechService {
   }
 
   /**
+   * The browser voice Automatic plays here, or null when it plays Google's
+   */
+  async getAutoVoice(): Promise<SpeechSynthesisVoice | null> {
+    if (!('speechSynthesis' in window)) return null;
+    await this.ensureVoicesLoaded();
+    return this.findNaturalVoice(speechSynthesis.getVoices());
+  }
+
+  /**
    * The browser voice chosen in settings
    * @returns null for Google's voice, or when the chosen voice isn't on this device
    */
   private async getChosenVoice(voiceId: string): Promise<SpeechSynthesisVoice | null> {
     if (voiceId === GOOGLE_VOICE || !('speechSynthesis' in window)) return null;
+    // warmUp() starts loading voices when the popup opens, so by the time play is pressed this rarely waits
     await this.ensureVoicesLoaded();
     const voices = speechSynthesis.getVoices();
     if (voiceId === AUTO_VOICE) return this.findNaturalVoice(voices);
@@ -117,6 +131,22 @@ class SpeechService {
     this.lastWasSlow = slow;
     this.lastSpokenAt = now;
     return slow;
+  }
+
+  /**
+   * Get ready to speak when a popup opens: load browser voices and, for Google's voice, start the
+   * offscreen document. Nothing is sent to Google until play is pressed
+   */
+  warmUp(): void {
+    readVoice()
+      .then(voiceId => this.getChosenVoice(voiceId))
+      .then(voice => {
+        // A browser voice needs no offscreen document
+        if (voice) return;
+        return chrome.runtime.sendMessage({ action: TTS_MESSAGES.PRELOAD });
+      })
+      // Extension context invalidated (extension reloaded); playing will report it
+      .catch(() => {});
   }
 
   /**
