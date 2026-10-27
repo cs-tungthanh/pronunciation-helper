@@ -14,6 +14,8 @@ export const GOOGLE_TRANSLATE_CLIENTS = ['dict-chrome-ex', 'gtx'];
 export const MYMEMORY_TRANSLATE_URL = 'https://api.mymemory.translated.net/get';
 export const MYMEMORY_MAX_CHARS = 500;
 export const TRANSLATION_MAX_CHARS = 5000;
+// Longer selections are cut to this, so the popup stays quick to build and can still be translated
+export const SELECTION_MAX_CHARS = TRANSLATION_MAX_CHARS;
 export const TRANSLATION_SOURCE_LANG = 'en';
 export const DICTIONARY_MAX_MEANINGS = 5;
 export const TRANSLATION_OFF = 'off';

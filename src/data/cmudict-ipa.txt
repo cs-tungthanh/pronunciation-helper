@@ -101612,10 +101612,10 @@ septic	ˈseptɪk
 septima	sepˈtiːmə
 septimus	ˈseptɪmɪs
 septuagenarian	sepˌtʃuːədʒəˈneriən
-sepulvado	seɪpulˈvɑːdoʊ
-sepulveda	seɪpulˈveɪdə
 sepultura	ˈsepʊlˈtʊrʊ
 sepultura's	ˈsepʊlˈtʊrʊz
+sepulvado	seɪpulˈvɑːdoʊ
+sepulveda	seɪpulˈveɪdə
 sequa	ˈsekwə
 sequa's	ˈsekwəz
 sequeira	seɪˈkwerə
@@ -108383,9 +108383,9 @@ stillwell's	ˈstɪlˌwelz
 stils	stɪlz
 stilson	ˈstɪlsən
 stilt	stɪlt
-stilton	ˈstɪltən
 stilted	ˈstɪltɪd
 stiltner	ˈstɪltnɚ
+stilton	ˈstɪltən
 stilts	stɪlts
 stilwell	ˈstɪlˌwel
 stimac	ˈstɪmək

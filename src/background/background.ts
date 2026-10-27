@@ -36,25 +36,14 @@ async function ensureOffscreenDocument(): Promise<void> {
 }
 
 /**
- * Download (or take from the cache) every chunk of text at one speed
- */
-function getSpeechAudio(text: string, slow: boolean): Promise<string[]> {
-  return Promise.all(buildGoogleTtsUrls(text, slow).map(getTtsAudio));
-}
-
-/**
- * What to play for each chunk: the cached audio, or else Google's URL, which starts playing while it
+ * What to play for one chunk: the cached audio, or else Google's URL, which starts playing while it
  * downloads; the cache downloads a copy of it for next time
  */
-function getSpeechSources(text: string, slow: boolean): Promise<string[]> {
-  return Promise.all(
-    buildGoogleTtsUrls(text, slow).map(async (url) => {
-      const cached = await getCachedTtsAudio(url);
-      if (cached) return cached;
-      getTtsAudio(url).catch(() => {});
-      return url;
-    })
-  );
+async function getCachedSource(url: string): Promise<string> {
+  const cached = await getCachedTtsAudio(url);
+  if (cached) return cached;
+  getTtsAudio(url).catch(() => {});
+  return url;
 }
 
 /**
@@ -62,11 +51,18 @@ function getSpeechSources(text: string, slow: boolean): Promise<string[]> {
  */
 async function speakWithGoogle(text: string, slow: boolean, speed: number): Promise<SpeechStatus> {
   const token = ++speechToken;
-  const [sources] = await Promise.all([getSpeechSources(text, slow), ensureOffscreenDocument()]);
+  const urls = buildGoogleTtsUrls(text, slow);
+  // Only text that fits in one chunk is cached: replays are of a word or a phrase, and caching long
+  // text would download every chunk again at once
+  const cached = urls.length === 1;
+  const [sources] = await Promise.all([
+    cached ? getCachedSource(urls[0]).then(source => [source]) : urls,
+    ensureOffscreenDocument()
+  ]);
   if (token !== speechToken) return 'stopped';
 
   // Playing the same text again soon after is the slow repeat: get it ready while this one plays
-  if (!slow) getSpeechAudio(text, true).catch(() => {});
+  if (cached && !slow) getTtsAudio(buildGoogleTtsUrls(text, true)[0]).catch(() => {});
 
   const response = await chrome.runtime.sendMessage({
     target: OFFSCREEN_TARGET,

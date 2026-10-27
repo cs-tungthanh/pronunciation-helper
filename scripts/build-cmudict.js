@@ -115,6 +115,9 @@ for (const line of dict.split('\n')) {
 }
 
 fs.mkdirSync(OUT_DIR, { recursive: true });
+// Sorted, since src/api/cmudict.ts binary-searches the file instead of loading it into a table.
+// The tab sorts before any letter, so sorting whole lines sorts them by word
+lines.sort();
 fs.writeFileSync(path.join(OUT_DIR, 'cmudict-ipa.txt'), lines.join('\n') + '\n');
 fs.writeFileSync(
   path.join(OUT_DIR, 'CMUDICT-LICENSE'),

@@ -5,30 +5,50 @@
 
 import { CMUDICT_PATH } from '../constants/app-constants';
 
-let dictionary: Promise<Map<string, string>> | null = null;
+let dictionary: Promise<string> | null = null;
 
 /**
- * Load the word → IPA table once per service worker lifetime
+ * Load the dictionary file once per service worker lifetime. It is searched as it is: building a
+ * table of every word would cost far more time and memory each time the worker wakes
  */
-function loadDictionary(): Promise<Map<string, string>> {
+function loadDictionary(): Promise<string> {
   dictionary ??= fetch(chrome.runtime.getURL(CMUDICT_PATH))
     .then((response) => {
       if (!response.ok) throw new Error(`Dictionary file HTTP ${response.status}`);
       return response.text();
-    })
-    .then((text) => {
-      const table = new Map<string, string>();
-      for (const line of text.split('\n')) {
-        const tab = line.indexOf('\t');
-        if (tab > 0) table.set(line.slice(0, tab), line.slice(tab + 1));
-      }
-      return table;
     })
     .catch((error) => {
       dictionary = null; // Retry on the next lookup
       throw error;
     });
   return dictionary;
+}
+
+/**
+ * Binary-search the dictionary's "word<tab>IPA" lines, which are sorted by word
+ * @returns The word's IPA, or null when it isn't listed
+ */
+function findIpa(text: string, word: string): string | null {
+  // Both always fall on the start of a line (or the end of the text)
+  let low = 0;
+  let high = text.length;
+
+  while (low < high) {
+    const middle = (low + high) >>> 1;
+    const start = text.lastIndexOf('\n', middle - 1) + 1;
+    const tab = text.indexOf('\t', start);
+    const end = text.indexOf('\n', tab);
+    if (tab < 0 || end < 0) return null;
+
+    const key = text.slice(start, tab);
+    if (key === word) return text.slice(tab + 1, end);
+    if (key < word) {
+      low = end + 1;
+    } else {
+      high = start;
+    }
+  }
+  return null;
 }
 
 // Sounds that decide how an ending is pronounced (tʃ and dʒ end in ʃ and ʒ)
@@ -89,9 +109,9 @@ function inflectionCandidates(word: string): { base: string; ending: (lastSound:
 /**
  * Pronounce an inflected form from its base word ("booked" → book + /t/)
  */
-function inflect(table: Map<string, string>, word: string): string | null {
+function inflect(text: string, word: string): string | null {
   for (const { base, ending } of inflectionCandidates(word)) {
-    const baseIpa = table.get(base);
+    const baseIpa = findIpa(text, base);
     if (!baseIpa) continue;
 
     const suffix = ending(baseIpa.replace(/ː$/, '').slice(-1));
@@ -108,8 +128,8 @@ function inflect(table: Map<string, string>, word: string): string | null {
  * @returns IPA between slashes, or null when the dictionary can't pronounce the word
  */
 export async function lookupBundledIpa(word: string): Promise<string | null> {
-  const table = await loadDictionary();
+  const text = await loadDictionary();
   const key = word.toLowerCase();
-  const ipa = table.get(key) ?? inflect(table, key);
+  const ipa = findIpa(text, key) ?? inflect(text, key);
   return ipa ? `/${ipa}/` : null;
 }

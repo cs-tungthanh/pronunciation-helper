@@ -2,12 +2,20 @@
  * Helper utilities for working with text selection
  */
 
+import { SELECTION_MAX_CHARS } from '../constants/app-constants';
+
 /**
- * Get the selected text from the page
+ * Get the selected text from the page, cut at a word to at most SELECTION_MAX_CHARS with an ellipsis
  */
 export function getSelectedText(): string {
   const selection = window.getSelection();
-  return selection ? selection.toString().trim() : '';
+  const text = selection ? selection.toString().trim() : '';
+  if (text.length <= SELECTION_MAX_CHARS) return text;
+
+  // One character is left for the ellipsis
+  const cut = text.slice(0, SELECTION_MAX_CHARS - 1);
+  const lastSpace = cut.search(/\s\S*$/);
+  return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut).trimEnd() + '…';
 }
 
 /**

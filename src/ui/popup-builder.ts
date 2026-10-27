@@ -297,14 +297,23 @@ function createTextDisplay(text: string, onWordClick: (wordElement: HTMLElement)
     wordSpan.title = UI_LABELS.WORD_TOOLTIP;
     wordSpan.tabIndex = 0;
     wordSpan.setAttribute('role', 'button');
-    wordSpan.addEventListener('click', () => onWordClick(wordSpan));
-    wordSpan.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        onWordClick(wordSpan);
-      }
-    });
     textDiv.appendChild(wordSpan);
+  });
+
+  // One listener for every word, so a long text doesn't add two per word
+  const wordAt = (target: EventTarget | null) =>
+    (target as HTMLElement | null)?.closest<HTMLElement>('.elang-popup-word') ?? null;
+
+  textDiv.addEventListener('click', (e) => {
+    const wordSpan = wordAt(e.target);
+    if (wordSpan) onWordClick(wordSpan);
+  });
+  textDiv.addEventListener('keydown', (e) => {
+    const wordSpan = wordAt(e.target);
+    if (wordSpan && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      onWordClick(wordSpan);
+    }
   });
 
   return textDiv;

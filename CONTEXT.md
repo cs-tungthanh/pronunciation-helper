@@ -5,7 +5,7 @@ A Chrome extension for English language learners to hear pronunciation of words 
 ## Core Concepts
 
 ### Selection
-Text highlighted by the user on a webpage. Can be a single word, full sentences, or even multiple paragraphs. The extension responds to any text selection without length limits.
+Text highlighted by the user on a webpage. Can be a single word, full sentences, or even multiple paragraphs. The extension responds to any text selection; one longer than 5,000 characters is cut at a word, with an ellipsis, so the popup stays quick and can still be translated.
 
 ### Pronunciation
 Audio playback of the selected text using American English (en-US). Plays at normal speaking speed. Users can restart pronunciation while audio is playing to hear it again immediately - essential for learning contexts where repetition aids retention.
@@ -23,4 +23,4 @@ Phonetic transcription displayed for each word in the selection. Fetched in para
 - **Immediate feedback**: Popup appears as soon as text is selected
 - **Reliability over quality**: Uses browser's built-in Web Speech API to ensure pronunciation always works, avoiding network dependencies and CORS issues
 - **Learning-focused**: Features (replay, dismissal behavior) optimize for language learners who need repetition and focus
-- **No limits**: Can handle selections of any length, from single words to entire paragraphs
+- **Any length**: Handles selections from single words to several paragraphs, cutting very long ones (over 5,000 characters)
