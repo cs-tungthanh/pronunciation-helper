@@ -18,8 +18,8 @@ Phonetic transcription displayed for each word in the selection. Fetched in para
 
 **Contraction Expansion:** Before looking up IPA, contractions are automatically expanded to their full forms (e.g., "doesn't" becomes "does not"). This ensures learners see pronunciation for both parts of common contractions, improving coverage and educational value.
 
-### YouTube Seek Shortcuts
-On a YouTube watch page, A and D skip the video back or forward by a chosen number of seconds (1–60, default 2), so learners can replay a phrase more finely than YouTube's own 5-second arrows. YouTube doesn't use A or D itself. They're ignored while typing in search, comments or any field, and they follow the site's on/off switch. The amount is set on the options page and applies without reloading. YouTube features live in `src/youtube/`; each one is a `YouTubeFeature` listed in `youtube-features.ts`.
+### Sentence Replay (YouTube)
+On a YouTube watch page, A jumps back to the start of the sentence being spoken, so learners can hear it again; pressed again within a second it goes to the sentence before. D jumps to the next sentence. YouTube doesn't use A or D itself. Sentences come from the video's captions: Sayly can't request captions itself (YouTube requires a token its player makes), so it re-fetches the caption request the player makes once captions are turned on, then rejoins the caption lines' words and splits them at sentence punctuation or pauses, cutting sentences longer than 10 seconds at the next line; captions with hardly any punctuation are split at every line. Without captions, or while an ad plays, A and D skip back or forward by a chosen number of seconds (1–60, default 2). The keys are ignored while typing in search, comments or any field, and they follow the site's on/off switch. The amount is set on the options page and applies without reloading. YouTube features live in `src/youtube/`; each one is a `YouTubeFeature` listed in `youtube-features.ts`.
 
 ## Design Principles
 

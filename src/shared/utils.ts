@@ -290,7 +290,7 @@ export function isValidYouTubeSeekSeconds(seconds: unknown): seconds is number {
 }
 
 /**
- * Get how many seconds the YouTube shortcuts skip back or forward
+ * Get how many seconds the YouTube shortcuts skip back or forward when a video has no captions
  * @returns The stored amount, or the default when unset or invalid
  */
 export async function getYouTubeSeekSeconds(): Promise<number> {

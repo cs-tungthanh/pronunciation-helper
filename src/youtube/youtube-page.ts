@@ -23,10 +23,24 @@ export function isWatchPage(): boolean {
 }
 
 /**
+ * The id of the video open now (the v= in the address), or null off a watch page
+ */
+export function getWatchVideoId(): string | null {
+  return isWatchPage() ? new URLSearchParams(window.location.search).get('v') : null;
+}
+
+/**
  * The watch page's video element, or null before the player has loaded
  */
 export function getWatchVideo(): HTMLVideoElement | null {
   return document.querySelector<HTMLVideoElement>('#movie_player video');
+}
+
+/**
+ * Whether an ad is playing in the player instead of the video
+ */
+export function isAdShowing(): boolean {
+  return Boolean(document.querySelector('#movie_player.ad-showing'));
 }
 
 /**

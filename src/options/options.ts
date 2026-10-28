@@ -224,7 +224,7 @@ async function renderSpeechSpeed(elements: OptionsElements): Promise<void> {
 }
 
 /**
- * Render the field for how many seconds the YouTube shortcuts skip
+ * Render the field for how many seconds the YouTube shortcuts skip when there are no captions
  */
 async function renderYouTubeSeekSeconds(elements: OptionsElements): Promise<void> {
   const input = elements.youtubeSeekSeconds;

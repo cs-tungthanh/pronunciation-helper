@@ -2,7 +2,8 @@
  * Features for watching YouTube; the content script starts and stops them with the rest of Sayly
  */
 
-import { seekShortcuts } from './seek-shortcuts';
+import { captionTracker } from './caption-tracker';
+import { sentenceShortcuts } from './sentence-shortcuts';
 import { isYouTubeSite } from './youtube-page';
 
 /**
@@ -14,8 +15,8 @@ export interface YouTubeFeature {
   stop(): void;
 }
 
-// Add new features here
-const FEATURES: readonly YouTubeFeature[] = [seekShortcuts];
+// Add new features here; the caption tracker comes first, since the others read captions from it
+const FEATURES: readonly YouTubeFeature[] = [captionTracker, sentenceShortcuts];
 
 let started = false;
 

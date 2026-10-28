@@ -52,12 +52,23 @@ export const THEMES = {
 export type Theme = typeof THEMES[keyof typeof THEMES];
 export const DEFAULT_THEME: Theme = THEMES.SYSTEM;
 
-// YouTube watch pages: shortcuts that skip the video back or forward by the chosen number of seconds.
+// YouTube watch pages: shortcuts to hear the current sentence again or move to the next one, using the
+// video's captions. Without captions they skip back or forward by the chosen number of seconds instead.
 // A and D, which YouTube leaves free (it takes ←/→ for 5s and J/L for 10s); lowercase key values
 export const YOUTUBE_SEEK_KEYS = {
   BACK: 'a',
   FORWARD: 'd'
 } as const;
+// A sentence plays from a little before its first word, so the word isn't clipped
+export const SENTENCE_LEAD_MS = 250;
+// Pressing back again within this long goes to the sentence before
+export const SENTENCE_RESTART_WINDOW_MS = 1000;
+// For captions without punctuation: a pause this long ends a sentence, and a sentence this long ends
+// at the next caption line
+export const CAPTION_SENTENCE_GAP_MS = 1000;
+export const CAPTION_SENTENCE_MAX_MS = 10000;
+// Videos whose caption sentences are kept
+export const CAPTION_CACHE_SIZE = 10;
 export const YOUTUBE_SEEK_MIN_SECONDS = 1;
 export const YOUTUBE_SEEK_MAX_SECONDS = 60;
 export const DEFAULT_YOUTUBE_SEEK_SECONDS = 2;
