@@ -18,6 +18,9 @@ Phonetic transcription displayed for each word in the selection. Fetched in para
 
 **Contraction Expansion:** Before looking up IPA, contractions are automatically expanded to their full forms (e.g., "doesn't" becomes "does not"). This ensures learners see pronunciation for both parts of common contractions, improving coverage and educational value.
 
+### YouTube Seek Shortcuts
+On a YouTube watch page, A and D skip the video back or forward by a chosen number of seconds (1–60, default 2), so learners can replay a phrase more finely than YouTube's own 5-second arrows. YouTube doesn't use A or D itself. They're ignored while typing in search, comments or any field, and they follow the site's on/off switch. The amount is set on the options page and applies without reloading. YouTube features live in `src/youtube/`; each one is a `YouTubeFeature` listed in `youtube-features.ts`.
+
 ## Design Principles
 
 - **Immediate feedback**: Popup appears as soon as text is selected

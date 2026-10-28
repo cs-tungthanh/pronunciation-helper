@@ -67,6 +67,16 @@
         <p class="note">Selected text is sent to Google Translate (or MyMemory as a fallback) when translation is on</p>
       </section>
 
+      <section class="youtube-section">
+        <h2>YouTube</h2>
+        <label class="setting-field">
+          <span>Skip back or forward by</span>
+          <input type="number" id="youtubeSeekSeconds" class="setting-number" min="1" max="60" step="1" inputmode="numeric" aria-describedby="youtubeSeekHint">
+          <span>seconds</span>
+        </label>
+        <p class="note" id="youtubeSeekHint">On a YouTube video, press A to skip back and D to skip forward. Choose 1 to 60 seconds</p>
+      </section>
+
       <section class="appearance-section">
         <h2>Appearance</h2>
         <label class="setting-field">

@@ -21,7 +21,10 @@ import {
   getSpeechSpeed,
   saveSpeechSpeed,
   getVoice,
-  saveVoice
+  saveVoice,
+  getYouTubeSeekSeconds,
+  saveYouTubeSeekSeconds,
+  isValidYouTubeSeekSeconds
 } from '../shared/utils';
 import { speechService } from '../speech/speech-service';
 import { getOptionalElement, onDOMReady, applyPageTheme } from '../shared/dom-helpers';
@@ -54,6 +57,7 @@ interface OptionsElements {
   voice: HTMLSelectElement | null;
   speechSpeed: HTMLSelectElement | null;
   voicePreview: HTMLButtonElement | null;
+  youtubeSeekSeconds: HTMLInputElement | null;
 }
 
 /**
@@ -72,7 +76,8 @@ function getOptionsElements(): OptionsElements {
     theme: getOptionalElement<HTMLSelectElement>('theme'),
     voice: getOptionalElement<HTMLSelectElement>('voice'),
     speechSpeed: getOptionalElement<HTMLSelectElement>('speechSpeed'),
-    voicePreview: getOptionalElement<HTMLButtonElement>('voicePreview')
+    voicePreview: getOptionalElement<HTMLButtonElement>('voicePreview'),
+    youtubeSeekSeconds: getOptionalElement<HTMLInputElement>('youtubeSeekSeconds')
   };
 }
 
@@ -219,6 +224,33 @@ async function renderSpeechSpeed(elements: OptionsElements): Promise<void> {
 }
 
 /**
+ * Render the field for how many seconds the YouTube shortcuts skip
+ */
+async function renderYouTubeSeekSeconds(elements: OptionsElements): Promise<void> {
+  const input = elements.youtubeSeekSeconds;
+  if (!input) {
+    return;
+  }
+
+  let saved = await getYouTubeSeekSeconds();
+  input.value = String(saved);
+
+  // Save each valid value as it's typed; content scripts listen for storage changes
+  input.addEventListener('input', () => {
+    const seconds = input.valueAsNumber;
+    if (isValidYouTubeSeekSeconds(seconds) && seconds !== saved) {
+      saved = seconds;
+      saveYouTubeSeekSeconds(seconds);
+    }
+  });
+
+  // Leaving the field with an invalid value puts back the one that's in effect
+  input.addEventListener('change', () => {
+    if (!isValidYouTubeSeekSeconds(input.valueAsNumber)) input.value = String(saved);
+  });
+}
+
+/**
  * Wire the button that plays a sample with the chosen voice and speed
  */
 function setupVoicePreview(elements: OptionsElements): void {
@@ -338,7 +370,8 @@ async function initOptions(): Promise<void> {
     renderTheme(elements),
     renderVoice(elements),
     renderSpeechSpeed(elements),
-    renderTargetLanguage(elements)
+    renderTargetLanguage(elements),
+    renderYouTubeSeekSeconds(elements)
   ]);
 }
 

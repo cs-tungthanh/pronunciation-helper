@@ -52,6 +52,16 @@ export const THEMES = {
 export type Theme = typeof THEMES[keyof typeof THEMES];
 export const DEFAULT_THEME: Theme = THEMES.SYSTEM;
 
+// YouTube watch pages: shortcuts that skip the video back or forward by the chosen number of seconds.
+// A and D, which YouTube leaves free (it takes ←/→ for 5s and J/L for 10s); lowercase key values
+export const YOUTUBE_SEEK_KEYS = {
+  BACK: 'a',
+  FORWARD: 'd'
+} as const;
+export const YOUTUBE_SEEK_MIN_SECONDS = 1;
+export const YOUTUBE_SEEK_MAX_SECONDS = 60;
+export const DEFAULT_YOUTUBE_SEEK_SECONDS = 2;
+
 // Text-to-speech: Google Translate's voice (undocumented endpoint; tw-ob is the client it answers)
 export const GOOGLE_TTS_URL = 'https://translate.google.com/translate_tts';
 export const GOOGLE_TTS_CLIENT = 'tw-ob';
