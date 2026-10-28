@@ -100,9 +100,6 @@ jobs:
       - name: Prepare distribution
         if: ${{ github.event.inputs.publish == 'true' }}
         run: |
-          cp manifest.json dist/
-          cp -r src/icons dist/
-          cp src/content/popup.css dist/ 2>/dev/null || cp popup.css dist/ 2>/dev/null || true
           cd dist
           zip -r ../extension.zip .
 

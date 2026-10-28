@@ -31,12 +31,6 @@ jobs:
       - name: Build extension
         run: pnpm run build
 
-      - name: Copy required files to dist
-        run: |
-          cp manifest.json dist/
-          cp -r src/icons dist/
-          cp src/content/popup.css dist/ 2>/dev/null || cp popup.css dist/ 2>/dev/null || true
-
       - name: Create ZIP file
         run: |
           cd dist
