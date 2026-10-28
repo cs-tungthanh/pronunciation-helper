@@ -15,3 +15,20 @@ export function cachedSetting<T>(key: string, read: () => Promise<T>): () => Pro
 
   return () => (value ??= read());
 }
+
+/**
+ * Keep a stored setting's latest value at hand, for code that must decide without waiting
+ * (a key handler choosing whether to take a key). Until storage is first read, the fallback is used.
+ * @param key The chrome.storage.local key the reader reads
+ */
+export function liveSetting<T>(key: string, read: () => Promise<T>, fallback: T): () => T {
+  let value = fallback;
+  const refresh = () => read().then(latest => { value = latest; });
+
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local' && key in changes) refresh();
+  });
+  refresh();
+
+  return () => value;
+}

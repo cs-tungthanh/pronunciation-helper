@@ -272,6 +272,20 @@ input:disabled + .slider {
   color: var(--heading);
 }
 
+.setting-number {
+  width: 80px;
+  padding: 8px 12px;
+  font-size: 16px;
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--heading);
+}
+
+.setting-number:invalid {
+  border-color: #e74c3c;
+}
+
 .preview-btn {
   padding: 8px 16px;
   margin-bottom: 15px;

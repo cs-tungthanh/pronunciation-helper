@@ -86,6 +86,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   // Addressed to the offscreen document, not to us
   if (message.target === OFFSCREEN_TARGET) return false;
 
+  if (message.action === MESSAGE_ACTIONS.OPEN_OPTIONS) {
+    chrome.runtime.openOptionsPage();
+    return false;
+  }
+
   if (message.action === MESSAGE_ACTIONS.LOOKUP_IPA) {
     // lookupWordIpa reads failures as "no IPA", so it never rejects
     lookupWordIpa(message.word).then(ipa => sendResponse({ ipa }));

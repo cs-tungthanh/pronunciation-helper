@@ -20,6 +20,7 @@ import {
   isDarkTheme
 } from '../shared/utils';
 import { cachedSetting } from '../shared/settings-cache';
+import { startYouTubeFeatures, stopYouTubeFeatures } from '../youtube/youtube-features';
 import {
   SELECTION_DELAY_MS,
   CLICK_MAX_MOVE_PX,
@@ -174,6 +175,7 @@ function cleanup(): void {
   }
 
   document.removeEventListener('keydown', handleKeydown);
+  stopYouTubeFeatures();
 
   isActive = false;
 }
@@ -209,6 +211,7 @@ function init(): void {
   document.addEventListener('mouseup', mouseupHandler);
   document.addEventListener('mousedown', mousedownHandler);
   document.addEventListener('keydown', handleKeydown);
+  startYouTubeFeatures();
 }
 
 /**

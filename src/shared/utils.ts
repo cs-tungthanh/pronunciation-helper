@@ -15,7 +15,10 @@ import {
   Theme,
   SPEECH_SPEEDS,
   DEFAULT_SPEECH_SPEED,
-  DEFAULT_VOICE
+  DEFAULT_VOICE,
+  DEFAULT_YOUTUBE_SEEK_SECONDS,
+  YOUTUBE_SEEK_MIN_SECONDS,
+  YOUTUBE_SEEK_MAX_SECONDS
 } from '../constants/app-constants';
 import { LOG_PREFIX } from '../constants/messages';
 
@@ -272,6 +275,90 @@ export async function getSpeechSpeed(): Promise<number> {
 export async function saveSpeechSpeed(speed: number): Promise<void> {
   try {
     await chrome.storage.local.set({ speechSpeed: speed });
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to save to storage:`, error);
+  }
+}
+
+/**
+ * Get whether the YouTube sentence shortcuts (A and D) are on
+ * @returns true unless turned off
+ */
+export async function getYouTubeShortcutsEnabled(): Promise<boolean> {
+  try {
+    const { youtubeShortcutsEnabled } = await chrome.storage.local.get('youtubeShortcutsEnabled');
+    return youtubeShortcutsEnabled !== false;
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to read storage:`, error);
+    return true;
+  }
+}
+
+/**
+ * Save whether the YouTube sentence shortcuts are on
+ */
+export async function saveYouTubeShortcutsEnabled(enabled: boolean): Promise<void> {
+  try {
+    await chrome.storage.local.set({ youtubeShortcutsEnabled: enabled });
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to save to storage:`, error);
+  }
+}
+
+/**
+ * Get whether Sayly loads a YouTube video's captions by itself (hidden), so sentence jumps work with CC off
+ * @returns true unless turned off
+ */
+export async function getYouTubeAutoLoadCaptions(): Promise<boolean> {
+  try {
+    const { youtubeAutoLoadCaptions } = await chrome.storage.local.get('youtubeAutoLoadCaptions');
+    return youtubeAutoLoadCaptions !== false;
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to read storage:`, error);
+    return true;
+  }
+}
+
+/**
+ * Save whether Sayly loads YouTube captions by itself
+ */
+export async function saveYouTubeAutoLoadCaptions(enabled: boolean): Promise<void> {
+  try {
+    await chrome.storage.local.set({ youtubeAutoLoadCaptions: enabled });
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to save to storage:`, error);
+  }
+}
+
+/**
+ * Whether a value is a valid YouTube seek amount: a whole number of seconds within the allowed range
+ */
+export function isValidYouTubeSeekSeconds(seconds: unknown): seconds is number {
+  return Number.isInteger(seconds)
+    && (seconds as number) >= YOUTUBE_SEEK_MIN_SECONDS
+    && (seconds as number) <= YOUTUBE_SEEK_MAX_SECONDS;
+}
+
+/**
+ * Get how many seconds the YouTube shortcuts skip back or forward when a video has no captions
+ * @returns The stored amount, or the default when unset or invalid
+ */
+export async function getYouTubeSeekSeconds(): Promise<number> {
+  try {
+    const { youtubeSeekSeconds } = await chrome.storage.local.get('youtubeSeekSeconds');
+    return isValidYouTubeSeekSeconds(youtubeSeekSeconds) ? youtubeSeekSeconds : DEFAULT_YOUTUBE_SEEK_SECONDS;
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to read storage:`, error);
+    return DEFAULT_YOUTUBE_SEEK_SECONDS;
+  }
+}
+
+/**
+ * Save how many seconds the YouTube shortcuts skip (callers validate with isValidYouTubeSeekSeconds)
+ */
+export async function saveYouTubeSeekSeconds(seconds: number): Promise<void> {
+  try {
+    await chrome.storage.local.set({ youtubeSeekSeconds: seconds });
   } catch (error) {
     console.error(`${LOG_PREFIX} Failed to save to storage:`, error);
   }

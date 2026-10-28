@@ -21,7 +21,14 @@ import {
   getSpeechSpeed,
   saveSpeechSpeed,
   getVoice,
-  saveVoice
+  saveVoice,
+  getYouTubeSeekSeconds,
+  saveYouTubeSeekSeconds,
+  isValidYouTubeSeekSeconds,
+  getYouTubeShortcutsEnabled,
+  saveYouTubeShortcutsEnabled,
+  getYouTubeAutoLoadCaptions,
+  saveYouTubeAutoLoadCaptions
 } from '../shared/utils';
 import { speechService } from '../speech/speech-service';
 import { getOptionalElement, onDOMReady, applyPageTheme } from '../shared/dom-helpers';
@@ -54,6 +61,9 @@ interface OptionsElements {
   voice: HTMLSelectElement | null;
   speechSpeed: HTMLSelectElement | null;
   voicePreview: HTMLButtonElement | null;
+  youtubeSeekSeconds: HTMLInputElement | null;
+  youtubeShortcutsEnabled: HTMLInputElement | null;
+  youtubeAutoLoadCaptions: HTMLInputElement | null;
 }
 
 /**
@@ -72,7 +82,10 @@ function getOptionsElements(): OptionsElements {
     theme: getOptionalElement<HTMLSelectElement>('theme'),
     voice: getOptionalElement<HTMLSelectElement>('voice'),
     speechSpeed: getOptionalElement<HTMLSelectElement>('speechSpeed'),
-    voicePreview: getOptionalElement<HTMLButtonElement>('voicePreview')
+    voicePreview: getOptionalElement<HTMLButtonElement>('voicePreview'),
+    youtubeSeekSeconds: getOptionalElement<HTMLInputElement>('youtubeSeekSeconds'),
+    youtubeShortcutsEnabled: getOptionalElement<HTMLInputElement>('youtubeShortcutsEnabled'),
+    youtubeAutoLoadCaptions: getOptionalElement<HTMLInputElement>('youtubeAutoLoadCaptions')
   };
 }
 
@@ -219,6 +232,59 @@ async function renderSpeechSpeed(elements: OptionsElements): Promise<void> {
 }
 
 /**
+ * Render the switch for the YouTube sentence shortcuts
+ */
+async function renderYouTubeShortcutsEnabled(elements: OptionsElements): Promise<void> {
+  const checkbox = elements.youtubeShortcutsEnabled;
+  if (!checkbox) {
+    return;
+  }
+
+  checkbox.checked = await getYouTubeShortcutsEnabled();
+  checkbox.addEventListener('change', () => saveYouTubeShortcutsEnabled(checkbox.checked));
+}
+
+/**
+ * Render the switch for loading YouTube captions automatically
+ */
+async function renderYouTubeAutoLoadCaptions(elements: OptionsElements): Promise<void> {
+  const checkbox = elements.youtubeAutoLoadCaptions;
+  if (!checkbox) {
+    return;
+  }
+
+  checkbox.checked = await getYouTubeAutoLoadCaptions();
+  checkbox.addEventListener('change', () => saveYouTubeAutoLoadCaptions(checkbox.checked));
+}
+
+/**
+ * Render the field for how many seconds the YouTube shortcuts skip when there are no captions
+ */
+async function renderYouTubeSeekSeconds(elements: OptionsElements): Promise<void> {
+  const input = elements.youtubeSeekSeconds;
+  if (!input) {
+    return;
+  }
+
+  let saved = await getYouTubeSeekSeconds();
+  input.value = String(saved);
+
+  // Save each valid value as it's typed; content scripts listen for storage changes
+  input.addEventListener('input', () => {
+    const seconds = input.valueAsNumber;
+    if (isValidYouTubeSeekSeconds(seconds) && seconds !== saved) {
+      saved = seconds;
+      saveYouTubeSeekSeconds(seconds);
+    }
+  });
+
+  // Leaving the field with an invalid value puts back the one that's in effect
+  input.addEventListener('change', () => {
+    if (!isValidYouTubeSeekSeconds(input.valueAsNumber)) input.value = String(saved);
+  });
+}
+
+/**
  * Wire the button that plays a sample with the chosen voice and speed
  */
 function setupVoicePreview(elements: OptionsElements): void {
@@ -338,7 +404,10 @@ async function initOptions(): Promise<void> {
     renderTheme(elements),
     renderVoice(elements),
     renderSpeechSpeed(elements),
-    renderTargetLanguage(elements)
+    renderTargetLanguage(elements),
+    renderYouTubeSeekSeconds(elements),
+    renderYouTubeShortcutsEnabled(elements),
+    renderYouTubeAutoLoadCaptions(elements)
   ]);
 }
 
