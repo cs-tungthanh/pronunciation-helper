@@ -306,6 +306,31 @@ export async function saveYouTubeShortcutsEnabled(enabled: boolean): Promise<voi
 }
 
 /**
+ * Get whether Sayly loads a YouTube video's captions by itself (hidden), so sentence jumps work with CC off
+ * @returns true unless turned off
+ */
+export async function getYouTubeAutoLoadCaptions(): Promise<boolean> {
+  try {
+    const { youtubeAutoLoadCaptions } = await chrome.storage.local.get('youtubeAutoLoadCaptions');
+    return youtubeAutoLoadCaptions !== false;
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to read storage:`, error);
+    return true;
+  }
+}
+
+/**
+ * Save whether Sayly loads YouTube captions by itself
+ */
+export async function saveYouTubeAutoLoadCaptions(enabled: boolean): Promise<void> {
+  try {
+    await chrome.storage.local.set({ youtubeAutoLoadCaptions: enabled });
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to save to storage:`, error);
+  }
+}
+
+/**
  * Whether a value is a valid YouTube seek amount: a whole number of seconds within the allowed range
  */
 export function isValidYouTubeSeekSeconds(seconds: unknown): seconds is number {

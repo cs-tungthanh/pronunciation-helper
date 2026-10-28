@@ -7,7 +7,9 @@ import {
   getYouTubeSeekSeconds,
   saveYouTubeSeekSeconds,
   getYouTubeShortcutsEnabled,
-  saveYouTubeShortcutsEnabled
+  saveYouTubeShortcutsEnabled,
+  getYouTubeAutoLoadCaptions,
+  saveYouTubeAutoLoadCaptions
 } from '../shared/utils';
 import { createIcon, setButtonIcon, ICONS } from '../ui/icons';
 import { UI_LABELS } from '../constants/messages';
@@ -98,7 +100,11 @@ function createSecondsRow(seconds: number): HTMLElement {
  * Build the panel with the settings as they're stored now
  */
 async function createPanel(): Promise<HTMLElement> {
-  const [enabled, seconds] = await Promise.all([getYouTubeShortcutsEnabled(), getYouTubeSeekSeconds()]);
+  const [enabled, seconds, autoLoad] = await Promise.all([
+    getYouTubeShortcutsEnabled(),
+    getYouTubeSeekSeconds(),
+    getYouTubeAutoLoadCaptions()
+  ]);
 
   const element = document.createElement('div');
   element.className = PANEL_CLASS;
@@ -112,7 +118,9 @@ async function createPanel(): Promise<HTMLElement> {
   const status = document.createElement('p');
   const ready = hasCurrentCaptions();
   status.className = `elang-yt-status${ready ? ' elang-yt-status-ready' : ''}`;
-  status.textContent = ready ? UI_LABELS.YT_CAPTIONS_READY : UI_LABELS.YT_CAPTIONS_MISSING;
+  status.textContent = ready
+    ? UI_LABELS.YT_CAPTIONS_READY
+    : autoLoad ? UI_LABELS.YT_CAPTIONS_NONE : UI_LABELS.YT_CAPTIONS_MISSING;
 
   const allSettings = document.createElement('button');
   allSettings.type = 'button';
@@ -126,6 +134,7 @@ async function createPanel(): Promise<HTMLElement> {
   element.append(
     title,
     createSwitchRow(UI_LABELS.YT_SHORTCUTS, UI_LABELS.YT_SHORTCUTS_HINT, enabled, saveYouTubeShortcutsEnabled),
+    createSwitchRow(UI_LABELS.YT_AUTOLOAD, UI_LABELS.YT_AUTOLOAD_HINT, autoLoad, saveYouTubeAutoLoadCaptions),
     createSecondsRow(seconds),
     status,
     allSettings

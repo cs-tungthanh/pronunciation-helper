@@ -67,6 +67,11 @@ export const SENTENCE_RESTART_WINDOW_MS = 1000;
 // at the next caption line
 export const CAPTION_SENTENCE_GAP_MS = 1000;
 export const CAPTION_SENTENCE_MAX_MS = 10000;
+// Loading captions with CC off: how long to wait for the player to fetch them, and how long to keep
+// the caption text hidden after turning CC back off (the last line can linger on screen)
+export const CAPTION_AUTOLOAD_TIMEOUT_MS = 4000;
+export const CAPTION_AUTOLOAD_POLL_MS = 100;
+export const CAPTION_AUTOLOAD_UNHIDE_DELAY_MS = 300;
 // Videos whose caption sentences are kept
 export const CAPTION_CACHE_SIZE = 10;
 export const YOUTUBE_SEEK_MIN_SECONDS = 1;

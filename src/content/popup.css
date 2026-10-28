@@ -454,6 +454,12 @@
   color: #3ea6ff;
 }
 
+/* While Sayly turns CC on to load a video's captions, keep them off screen */
+#movie_player.elang-yt-captions-hidden .ytp-caption-window-container,
+#movie_player.elang-yt-captions-hidden .caption-window {
+  visibility: hidden !important;
+}
+
 .elang-yt-panel {
   position: absolute;
   right: 12px;

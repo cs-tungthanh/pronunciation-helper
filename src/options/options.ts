@@ -26,7 +26,9 @@ import {
   saveYouTubeSeekSeconds,
   isValidYouTubeSeekSeconds,
   getYouTubeShortcutsEnabled,
-  saveYouTubeShortcutsEnabled
+  saveYouTubeShortcutsEnabled,
+  getYouTubeAutoLoadCaptions,
+  saveYouTubeAutoLoadCaptions
 } from '../shared/utils';
 import { speechService } from '../speech/speech-service';
 import { getOptionalElement, onDOMReady, applyPageTheme } from '../shared/dom-helpers';
@@ -61,6 +63,7 @@ interface OptionsElements {
   voicePreview: HTMLButtonElement | null;
   youtubeSeekSeconds: HTMLInputElement | null;
   youtubeShortcutsEnabled: HTMLInputElement | null;
+  youtubeAutoLoadCaptions: HTMLInputElement | null;
 }
 
 /**
@@ -81,7 +84,8 @@ function getOptionsElements(): OptionsElements {
     speechSpeed: getOptionalElement<HTMLSelectElement>('speechSpeed'),
     voicePreview: getOptionalElement<HTMLButtonElement>('voicePreview'),
     youtubeSeekSeconds: getOptionalElement<HTMLInputElement>('youtubeSeekSeconds'),
-    youtubeShortcutsEnabled: getOptionalElement<HTMLInputElement>('youtubeShortcutsEnabled')
+    youtubeShortcutsEnabled: getOptionalElement<HTMLInputElement>('youtubeShortcutsEnabled'),
+    youtubeAutoLoadCaptions: getOptionalElement<HTMLInputElement>('youtubeAutoLoadCaptions')
   };
 }
 
@@ -241,6 +245,19 @@ async function renderYouTubeShortcutsEnabled(elements: OptionsElements): Promise
 }
 
 /**
+ * Render the switch for loading YouTube captions automatically
+ */
+async function renderYouTubeAutoLoadCaptions(elements: OptionsElements): Promise<void> {
+  const checkbox = elements.youtubeAutoLoadCaptions;
+  if (!checkbox) {
+    return;
+  }
+
+  checkbox.checked = await getYouTubeAutoLoadCaptions();
+  checkbox.addEventListener('change', () => saveYouTubeAutoLoadCaptions(checkbox.checked));
+}
+
+/**
  * Render the field for how many seconds the YouTube shortcuts skip when there are no captions
  */
 async function renderYouTubeSeekSeconds(elements: OptionsElements): Promise<void> {
@@ -389,7 +406,8 @@ async function initOptions(): Promise<void> {
     renderSpeechSpeed(elements),
     renderTargetLanguage(elements),
     renderYouTubeSeekSeconds(elements),
-    renderYouTubeShortcutsEnabled(elements)
+    renderYouTubeShortcutsEnabled(elements),
+    renderYouTubeAutoLoadCaptions(elements)
   ]);
 }
 

@@ -58,6 +58,9 @@ export const UI_LABELS = {
   YT_SKIP_MORE: 'Skip more',
   YT_CAPTIONS_READY: 'Sentences ready from this video\'s captions',
   YT_CAPTIONS_MISSING: 'Turn on captions (CC) once to jump by sentence',
+  YT_CAPTIONS_NONE: 'No captions loaded for this video, so A and D skip by seconds',
+  YT_AUTOLOAD: 'Load captions automatically',
+  YT_AUTOLOAD_HINT: 'Sentence jumps work with CC off; captions stay hidden',
   YT_ALL_SETTINGS: 'All settings',
 } as const;
 

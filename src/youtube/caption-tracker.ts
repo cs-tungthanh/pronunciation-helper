@@ -35,6 +35,10 @@ function noteRequest(url: string): void {
   const videoId = parsed.searchParams.get('v');
   if (!videoId) return;
 
+  // A request without the player's token gets an empty answer, so it mustn't replace one with it
+  const known = captionUrls.get(videoId);
+  if (known && new URL(known).searchParams.has('pot') && !parsed.searchParams.has('pot')) return;
+
   // Ask for the format that's parsed here, whatever the player asked for
   parsed.searchParams.set('fmt', 'json3');
   captionUrls.set(videoId, parsed.toString());
