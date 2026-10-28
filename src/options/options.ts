@@ -24,7 +24,9 @@ import {
   saveVoice,
   getYouTubeSeekSeconds,
   saveYouTubeSeekSeconds,
-  isValidYouTubeSeekSeconds
+  isValidYouTubeSeekSeconds,
+  getYouTubeShortcutsEnabled,
+  saveYouTubeShortcutsEnabled
 } from '../shared/utils';
 import { speechService } from '../speech/speech-service';
 import { getOptionalElement, onDOMReady, applyPageTheme } from '../shared/dom-helpers';
@@ -58,6 +60,7 @@ interface OptionsElements {
   speechSpeed: HTMLSelectElement | null;
   voicePreview: HTMLButtonElement | null;
   youtubeSeekSeconds: HTMLInputElement | null;
+  youtubeShortcutsEnabled: HTMLInputElement | null;
 }
 
 /**
@@ -77,7 +80,8 @@ function getOptionsElements(): OptionsElements {
     voice: getOptionalElement<HTMLSelectElement>('voice'),
     speechSpeed: getOptionalElement<HTMLSelectElement>('speechSpeed'),
     voicePreview: getOptionalElement<HTMLButtonElement>('voicePreview'),
-    youtubeSeekSeconds: getOptionalElement<HTMLInputElement>('youtubeSeekSeconds')
+    youtubeSeekSeconds: getOptionalElement<HTMLInputElement>('youtubeSeekSeconds'),
+    youtubeShortcutsEnabled: getOptionalElement<HTMLInputElement>('youtubeShortcutsEnabled')
   };
 }
 
@@ -221,6 +225,19 @@ async function renderSpeechSpeed(elements: OptionsElements): Promise<void> {
 
   select.value = String(await getSpeechSpeed());
   select.addEventListener('change', () => saveSpeechSpeed(Number(select.value)));
+}
+
+/**
+ * Render the switch for the YouTube sentence shortcuts
+ */
+async function renderYouTubeShortcutsEnabled(elements: OptionsElements): Promise<void> {
+  const checkbox = elements.youtubeShortcutsEnabled;
+  if (!checkbox) {
+    return;
+  }
+
+  checkbox.checked = await getYouTubeShortcutsEnabled();
+  checkbox.addEventListener('change', () => saveYouTubeShortcutsEnabled(checkbox.checked));
 }
 
 /**
@@ -371,7 +388,8 @@ async function initOptions(): Promise<void> {
     renderVoice(elements),
     renderSpeechSpeed(elements),
     renderTargetLanguage(elements),
-    renderYouTubeSeekSeconds(elements)
+    renderYouTubeSeekSeconds(elements),
+    renderYouTubeShortcutsEnabled(elements)
   ]);
 }
 

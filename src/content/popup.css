@@ -439,3 +439,157 @@
   background: var(--elang-accent-strong-soft);
   box-shadow: 0 0 0 2px var(--elang-accent-ring);
 }
+
+/* YouTube: Sayly's button in the player's control bar and its settings panel over the video.
+   Always dark, like the player's own menus. */
+.elang-yt-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: top;
+  color: #ffffff;
+}
+
+.elang-yt-button[aria-expanded='true'] {
+  color: #3ea6ff;
+}
+
+.elang-yt-panel {
+  position: absolute;
+  right: 12px;
+  /* Above the control bar and progress bar */
+  bottom: 76px;
+  z-index: 72;
+  width: 340px;
+  max-width: calc(100% - 24px);
+  max-height: calc(100% - 96px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 12px 16px 10px;
+  border-radius: 12px;
+  background: rgba(28, 28, 28, 0.94);
+  color: #f1f1f1;
+  font-family: 'YouTube Sans', Roboto, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+  text-shadow: none;
+  color-scheme: dark;
+}
+
+.elang-yt-title {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #aaaaaa;
+}
+
+.elang-yt-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  cursor: default;
+}
+
+label.elang-yt-row {
+  cursor: pointer;
+}
+
+.elang-yt-row + .elang-yt-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.elang-yt-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 15px;
+}
+
+.elang-yt-hint {
+  font-size: 12px;
+  color: #aaaaaa;
+}
+
+.elang-yt-checkbox {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: #3ea6ff;
+  cursor: pointer;
+}
+
+.elang-yt-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.elang-yt-stepper button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #f1f1f1;
+  cursor: pointer;
+}
+
+.elang-yt-stepper button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.elang-yt-stepper button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.elang-yt-stepper-value {
+  min-width: 36px;
+  text-align: center;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.elang-yt-status {
+  margin: 4px 0 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 12px;
+  color: #ffb74d;
+}
+
+.elang-yt-status.elang-yt-status-ready {
+  color: #81c995;
+}
+
+.elang-yt-link {
+  display: block;
+  margin: 8px 0 0 auto;
+  padding: 4px 0;
+  border: none;
+  background: none;
+  color: #3ea6ff;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.elang-yt-link:hover {
+  text-decoration: underline;
+}
+
+.elang-yt-button:focus-visible,
+.elang-yt-panel button:focus-visible,
+.elang-yt-checkbox:focus-visible {
+  outline: 2px solid #3ea6ff;
+  outline-offset: 2px;
+}

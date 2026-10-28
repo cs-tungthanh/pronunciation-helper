@@ -4,6 +4,7 @@
 
 import { captionTracker } from './caption-tracker';
 import { sentenceShortcuts } from './sentence-shortcuts';
+import { playerPanel } from './player-panel';
 import { isYouTubeSite } from './youtube-page';
 
 /**
@@ -16,7 +17,7 @@ export interface YouTubeFeature {
 }
 
 // Add new features here; the caption tracker comes first, since the others read captions from it
-const FEATURES: readonly YouTubeFeature[] = [captionTracker, sentenceShortcuts];
+const FEATURES: readonly YouTubeFeature[] = [captionTracker, sentenceShortcuts, playerPanel];
 
 let started = false;
 

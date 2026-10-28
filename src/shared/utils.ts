@@ -281,6 +281,31 @@ export async function saveSpeechSpeed(speed: number): Promise<void> {
 }
 
 /**
+ * Get whether the YouTube sentence shortcuts (A and D) are on
+ * @returns true unless turned off
+ */
+export async function getYouTubeShortcutsEnabled(): Promise<boolean> {
+  try {
+    const { youtubeShortcutsEnabled } = await chrome.storage.local.get('youtubeShortcutsEnabled');
+    return youtubeShortcutsEnabled !== false;
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to read storage:`, error);
+    return true;
+  }
+}
+
+/**
+ * Save whether the YouTube sentence shortcuts are on
+ */
+export async function saveYouTubeShortcutsEnabled(enabled: boolean): Promise<void> {
+  try {
+    await chrome.storage.local.set({ youtubeShortcutsEnabled: enabled });
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to save to storage:`, error);
+  }
+}
+
+/**
  * Whether a value is a valid YouTube seek amount: a whole number of seconds within the allowed range
  */
 export function isValidYouTubeSeekSeconds(seconds: unknown): seconds is number {

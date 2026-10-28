@@ -86,6 +86,8 @@ export const MESSAGE_ACTIONS = {
   // Content script → background
   TRANSLATE: 'translate',
   LOOKUP_IPA: 'lookup-ipa',
+  // Content scripts can't open the options page themselves
+  OPEN_OPTIONS: 'open-options',
   // Extension popup → content script
   ENABLE: 'enable',
   DISABLE: 'disable'

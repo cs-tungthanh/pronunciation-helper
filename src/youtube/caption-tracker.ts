@@ -50,6 +50,14 @@ async function loadSentences(url: string): Promise<CaptionSentence[]> {
 }
 
 /**
+ * Whether the player has fetched captions for the video open now, so sentences can be read
+ */
+export function hasCurrentCaptions(): boolean {
+  const videoId = getWatchVideoId();
+  return Boolean(videoId && captionUrls.has(videoId));
+}
+
+/**
  * Sentences of the video open now, or null when its captions haven't been shown yet or can't be read
  */
 export async function getCurrentSentences(): Promise<CaptionSentence[] | null> {

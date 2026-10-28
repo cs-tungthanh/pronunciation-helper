@@ -49,6 +49,16 @@ export const UI_LABELS = {
   VOICE_AUTO: 'Automatic',
   VOICE_GOOGLE: 'Google',
   SPEED_NORMAL: 'Normal',
+  YT_PANEL_BUTTON: 'Sayly settings',
+  YT_PANEL_TITLE: 'Sayly',
+  YT_SHORTCUTS: 'Sentence shortcuts',
+  YT_SHORTCUTS_HINT: 'A: hear the sentence again (twice: the one before) · D: next sentence',
+  YT_SKIP_SECONDS: 'Without captions, skip by',
+  YT_SKIP_LESS: 'Skip less',
+  YT_SKIP_MORE: 'Skip more',
+  YT_CAPTIONS_READY: 'Sentences ready from this video\'s captions',
+  YT_CAPTIONS_MISSING: 'Turn on captions (CC) once to jump by sentence',
+  YT_ALL_SETTINGS: 'All settings',
 } as const;
 
 export const LOG_PREFIX = '[Sayly]';

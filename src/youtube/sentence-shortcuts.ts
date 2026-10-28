@@ -3,8 +3,8 @@
  * They use the video's captions; without them they skip back or forward by the chosen number of seconds.
  */
 
-import { cachedSetting } from '../shared/settings-cache';
-import { getYouTubeSeekSeconds } from '../shared/utils';
+import { cachedSetting, liveSetting } from '../shared/settings-cache';
+import { getYouTubeSeekSeconds, getYouTubeShortcutsEnabled } from '../shared/utils';
 import {
   YOUTUBE_SEEK_KEYS,
   SENTENCE_LEAD_MS,
@@ -16,6 +16,7 @@ import type { CaptionSentence } from './caption-sentences';
 import type { YouTubeFeature } from './youtube-features';
 
 const readSeekSeconds = cachedSetting('youtubeSeekSeconds', getYouTubeSeekSeconds);
+const shortcutsEnabled = liveSetting('youtubeShortcutsEnabled', getYouTubeShortcutsEnabled, true);
 
 // Times within this much count as the same moment (a seek lands near, not on, the time asked for)
 const SAME_TIME_MS = 50;
@@ -98,7 +99,7 @@ function handleKeydown(event: KeyboardEvent): void {
   }
 
   const direction = getSeekDirection(event);
-  if (direction === 0 || !isWatchPage() || isTypingEvent(event)) return;
+  if (direction === 0 || !shortcutsEnabled() || !isWatchPage() || isTypingEvent(event)) return;
 
   const video = getWatchVideo();
   if (!video) return;
