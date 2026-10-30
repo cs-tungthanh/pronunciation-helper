@@ -12,6 +12,7 @@ export const TARGET_LANGUAGES: ReadonlyArray<{ code: string; name: string }> = [
   { code: 'zh-TW', name: 'Chinese (Traditional)' },
   { code: 'cs', name: 'Czech' },
   { code: 'nl', name: 'Dutch' },
+  { code: 'en', name: 'English' },
   { code: 'fil', name: 'Filipino' },
   { code: 'fr', name: 'French' },
   { code: 'de', name: 'German' },
@@ -39,8 +40,23 @@ export const TARGET_LANGUAGES: ReadonlyArray<{ code: string; name: string }> = [
   { code: 'vi', name: 'Vietnamese' },
 ];
 
-/** Every choice for the translation setting: off, then the target languages */
-export const TRANSLATION_CHOICES: ReadonlyArray<{ code: string; name: string }> = [
-  { code: TRANSLATION_OFF, name: UI_LABELS.TRANSLATION_OFF },
-  ...TARGET_LANGUAGES
+// Picked often enough to sit above the full list
+const SUGGESTED_LANGUAGE_CODES = ['vi', 'en', 'zh-CN', 'ja'];
+
+/** Target languages grouped for the translation picker: suggested first, then the rest */
+export const TARGET_LANGUAGE_GROUPS: ReadonlyArray<{
+  label: string;
+  languages: ReadonlyArray<{ code: string; name: string }>;
+}> = [
+  {
+    label: UI_LABELS.SUGGESTED_LANGUAGES,
+    languages: SUGGESTED_LANGUAGE_CODES.flatMap(code => TARGET_LANGUAGES.filter(language => language.code === code))
+  },
+  {
+    label: UI_LABELS.OTHER_LANGUAGES,
+    languages: TARGET_LANGUAGES.filter(({ code }) => !SUGGESTED_LANGUAGE_CODES.includes(code))
+  }
 ];
+
+/** The choice that turns translation off, listed above the language groups */
+export const TRANSLATION_OFF_CHOICE = { code: TRANSLATION_OFF, name: UI_LABELS.TRANSLATION_OFF };

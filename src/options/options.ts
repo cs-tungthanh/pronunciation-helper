@@ -31,7 +31,7 @@ import {
   saveYouTubeAutoLoadCaptions
 } from '../shared/utils';
 import { speechService } from '../speech/speech-service';
-import { getOptionalElement, onDOMReady, applyPageTheme } from '../shared/dom-helpers';
+import { getOptionalElement, onDOMReady, applyPageTheme, fillTranslationSelect } from '../shared/dom-helpers';
 import { ERROR_MESSAGES, UI_LABELS, THEME_CHOICES, SPEED_CHOICES } from '../constants/messages';
 import {
   POPUP_MODES,
@@ -43,7 +43,6 @@ import {
   AUTO_VOICE,
   VOICE_SAMPLE_TEXT
 } from '../constants/app-constants';
-import { TRANSLATION_CHOICES } from '../constants/languages';
 
 /**
  * DOM element references
@@ -98,9 +97,7 @@ async function renderTargetLanguage(elements: OptionsElements): Promise<void> {
     return;
   }
 
-  TRANSLATION_CHOICES.forEach(({ code, name }) => {
-    select.appendChild(new Option(name, code));
-  });
+  fillTranslationSelect(select);
 
   select.value = await getTargetLanguage();
 

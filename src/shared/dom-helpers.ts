@@ -2,6 +2,8 @@
  * DOM manipulation helpers
  */
 
+import { TARGET_LANGUAGE_GROUPS, TRANSLATION_OFF_CHOICE } from '../constants/languages';
+
 /**
  * Get required DOM element or throw error
  * @throws Error if element not found
@@ -38,4 +40,18 @@ export function onDOMReady(callback: () => void): void {
   } else {
     callback();
   }
+}
+
+/**
+ * Fill a translation language picker: the off choice, then each language group
+ */
+export function fillTranslationSelect(select: HTMLSelectElement): void {
+  select.appendChild(new Option(TRANSLATION_OFF_CHOICE.name, TRANSLATION_OFF_CHOICE.code));
+
+  TARGET_LANGUAGE_GROUPS.forEach(({ label, languages }) => {
+    const group = document.createElement('optgroup');
+    group.label = label;
+    languages.forEach(({ code, name }) => group.appendChild(new Option(name, code)));
+    select.appendChild(group);
+  });
 }
