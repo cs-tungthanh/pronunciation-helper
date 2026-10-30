@@ -11,22 +11,51 @@ import {
 import { speechService } from '../speech/speech-service';
 
 /**
+ * Told when a shown popup goes away; replaced is true when another popup took its place
+ */
+export type PopupRemoveListener = (replaced: boolean) => void;
+
+// Events kept from reaching a full-screen player under the popup, which would pause, seek or leave full screen
+const PLAYER_EVENTS = ['click', 'mousedown', 'mouseup', 'pointerdown', 'pointerup', 'dblclick', 'wheel'];
+
+/**
+ * Where popups go: the body, or the full-screen element when the body is hidden behind it
+ */
+function getPopupContainer(): HTMLElement {
+  const fullscreen = document.fullscreenElement;
+  return fullscreen instanceof HTMLElement && !fullscreen.contains(document.body) ? fullscreen : document.body;
+}
+
+/**
  * Popup state manager; the shown element is either the popup or the selection bar that opens it
  */
 class PopupManager {
   private currentPopup: HTMLElement | null = null;
+  private onRemove: PopupRemoveListener | null = null;
 
   /**
    * Position popup near selection with smart boundary detection
+   * @param position Page coordinates of the point the popup hangs below
    */
   positionPopup(popup: HTMLElement, position: { x: number; y: number }): void {
+    const container = getPopupContainer();
+    // In full screen the popup sits inside the full-screen element, placed against the viewport
+    const fixed = container !== document.body;
+    const viewTop = fixed ? 0 : window.scrollY;
+    const anchorY = position.y - (fixed ? window.scrollY : 0);
+
     let left = position.x;
-    let top = position.y + POPUP_POSITION_OFFSET_PX;
+    let top = anchorY + POPUP_POSITION_OFFSET_PX;
 
     // Temporarily position to measure dimensions
+    popup.style.position = fixed ? 'fixed' : '';
     popup.style.left = '0px';
     popup.style.top = '0px';
-    document.body.appendChild(popup);
+    container.appendChild(popup);
+
+    if (fixed) {
+      PLAYER_EVENTS.forEach(type => popup.addEventListener(type, event => event.stopPropagation()));
+    }
 
     const popupRect = popup.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
@@ -41,8 +70,8 @@ class PopupManager {
     }
 
     // Adjust vertical position if off-screen (show above selection)
-    if (top + popupRect.height > window.scrollY + viewportHeight) {
-      top = position.y - popupRect.height - POPUP_POSITION_OFFSET_PX;
+    if (top + popupRect.height > viewTop + viewportHeight) {
+      top = anchorY - popupRect.height - POPUP_POSITION_OFFSET_PX;
     }
 
     popup.style.left = `${left}px`;
@@ -51,25 +80,35 @@ class PopupManager {
 
   /**
    * Show a new popup (removes current popup if exists)
+   * @param onRemove Called once when this popup goes away
    */
-  showPopup(popup: HTMLElement, position: { x: number; y: number }): void {
-    this.removePopup();
+  showPopup(popup: HTMLElement, position: { x: number; y: number }, onRemove?: PopupRemoveListener): void {
+    this.close(true);
 
     // Also clear popups left by another copy of this script (e.g. one orphaned by an extension reload)
     document.querySelectorAll(`.${POPUP_CSS_CLASS}, .${TRIGGER_CSS_CLASS}`).forEach((stale) => stale.remove());
 
     this.positionPopup(popup, position);
     this.currentPopup = popup;
+    this.onRemove = onRemove ?? null;
   }
 
   /**
    * Remove the current popup and stop any playing audio
    */
   removePopup(): void {
+    this.close(false);
+  }
+
+  private close(replaced: boolean): void {
     if (this.currentPopup) {
       this.currentPopup.remove();
       this.currentPopup = null;
     }
+
+    const onRemove = this.onRemove;
+    this.onRemove = null;
+    onRemove?.(replaced);
 
     speechService.stop();
   }

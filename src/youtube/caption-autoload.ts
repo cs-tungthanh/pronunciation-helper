@@ -17,7 +17,7 @@ import {
   CAPTION_AUTOLOAD_UNHIDE_DELAY_MS
 } from '../constants/app-constants';
 import { hasCurrentCaptions } from './caption-tracker';
-import { getWatchVideoId, isAdShowing } from './youtube-page';
+import { getCaptionsButton, getWatchVideoId, isAdShowing, isCaptionsOn } from './youtube-page';
 import type { YouTubeFeature } from './youtube-features';
 
 // On the player while captions load, so the stylesheet hides the caption text
@@ -46,18 +46,6 @@ async function waitFor(check: () => boolean, timeoutMs = CAPTION_AUTOLOAD_TIMEOU
   }
   return check();
 }
-
-/**
- * The player's CC button, when this video has captions to turn on
- */
-function getCaptionsButton(): HTMLElement | null {
-  const button = document.querySelector<HTMLElement>('#movie_player .ytp-subtitles-button');
-  if (!button || button.getAttribute('aria-disabled') === 'true') return null;
-  // The player hides the button for videos without captions
-  return getComputedStyle(button).display === 'none' ? null : button;
-}
-
-const isCaptionsOn = () => getCaptionsButton()?.getAttribute('aria-pressed') === 'true';
 
 /**
  * Turn CC on or off with the player's button, checking that it took. The player can rebuild its

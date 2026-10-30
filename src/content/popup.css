@@ -460,6 +460,64 @@
   visibility: hidden !important;
 }
 
+/* Sayly's subtitles (subtitles.ts): whole sentences over the video, in place of the player's captions */
+#movie_player.elang-yt-subtitles-on .ytp-caption-window-container {
+  visibility: hidden !important;
+}
+
+.elang-yt-subtitles {
+  position: absolute;
+  left: 50%;
+  /* Above the control bar while it shows; lower once the player hides it */
+  bottom: 64px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2em;
+  width: max-content;
+  max-width: 80%;
+  transform: translateX(-50%);
+  transition: bottom 0.2s ease;
+  /* Only the text takes the pointer (for hovering words); the video around it still gets clicks */
+  pointer-events: none;
+  font-family: 'YouTube Noto', Roboto, Arial, sans-serif;
+  line-height: 1.35;
+  text-align: center;
+}
+
+#movie_player.ytp-autohide .elang-yt-subtitles {
+  bottom: 24px;
+}
+
+/* While Sayly loads captions with CC off, its subtitles stay hidden too */
+#movie_player.elang-yt-captions-hidden .elang-yt-subtitles {
+  visibility: hidden;
+}
+
+.elang-yt-subtitle-line {
+  padding: 0.1em 0.45em;
+  border-radius: 4px;
+  background: rgba(8, 8, 8, 0.75);
+  color: #ffffff;
+  pointer-events: auto;
+}
+
+.elang-yt-subtitle-line-past {
+  opacity: 0.6;
+  font-size: 0.85em;
+}
+
+.elang-yt-subtitle-word-now {
+  color: #ffd54f;
+}
+
+/* The caption word whose popup is open (CSS Custom Highlight API, set by caption-hover.ts) */
+::highlight(elang-caption-word) {
+  background-color: rgba(26, 115, 232, 0.55);
+  color: #ffffff;
+}
+
 .elang-yt-panel {
   position: absolute;
   right: 12px;
@@ -562,6 +620,34 @@ label.elang-yt-row {
   text-align: center;
   font-size: 15px;
   font-variant-numeric: tabular-nums;
+}
+
+.elang-yt-choice {
+  display: inline-flex;
+  flex-shrink: 0;
+  padding: 2px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.elang-yt-choice button {
+  padding: 5px 12px;
+  border: none;
+  border-radius: 14px;
+  background: none;
+  color: #f1f1f1;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.elang-yt-choice button[aria-checked='true'] {
+  background: #f1f1f1;
+  color: #0f0f0f;
+}
+
+.elang-yt-choice button:hover:not([aria-checked='true']) {
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .elang-yt-status {

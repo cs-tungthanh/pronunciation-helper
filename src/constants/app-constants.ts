@@ -74,8 +74,29 @@ export const CAPTION_SENTENCE_MAX_MS = 10000;
 export const CAPTION_AUTOLOAD_TIMEOUT_MS = 4000;
 export const CAPTION_AUTOLOAD_POLL_MS = 100;
 export const CAPTION_AUTOLOAD_UNHIDE_DELAY_MS = 300;
+// Hovering a caption word: how long the pointer rests on it before the video pauses and its popup
+// opens, and how long after leaving the word and popup the popup closes (time to cross the gap)
+export const CAPTION_HOVER_OPEN_DELAY_MS = 300;
+export const CAPTION_HOVER_CLOSE_DELAY_MS = 300;
+// Sayly's subtitles: how many recent sentences show at once, and how long a sentence stays after
+// it ends when the next one hasn't started (a long silence or music)
+export const YOUTUBE_SUBTITLE_MIN_LINES = 1;
+export const YOUTUBE_SUBTITLE_MAX_LINES = 3;
+export const DEFAULT_YOUTUBE_SUBTITLE_LINES = 2;
+// Subtitle text size in pixels
+export const YOUTUBE_SUBTITLE_MIN_SIZE = 12;
+export const YOUTUBE_SUBTITLE_MAX_SIZE = 48;
+export const DEFAULT_YOUTUBE_SUBTITLE_SIZE = 18;
+export const SUBTITLE_HOLD_MS = 5000;
 // Videos whose caption sentences are kept
 export const CAPTION_CACHE_SIZE = 10;
+// What A and D jump by: the sentences of the captions (skipping by seconds without them), or always seconds
+export const YOUTUBE_SHORTCUT_MODES = {
+  SENTENCE: 'sentence',
+  SECONDS: 'seconds'
+} as const;
+export type YouTubeShortcutMode = typeof YOUTUBE_SHORTCUT_MODES[keyof typeof YOUTUBE_SHORTCUT_MODES];
+export const DEFAULT_YOUTUBE_SHORTCUT_MODE: YouTubeShortcutMode = YOUTUBE_SHORTCUT_MODES.SENTENCE;
 export const YOUTUBE_SEEK_MIN_SECONDS = 1;
 export const YOUTUBE_SEEK_MAX_SECONDS = 60;
 export const DEFAULT_YOUTUBE_SEEK_SECONDS = 2;

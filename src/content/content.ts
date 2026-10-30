@@ -2,8 +2,8 @@
  * Main content script - orchestrates Sayly functionality
  */
 
-import { requestTranslation } from '../api/translation-client';
-import { createPopup, createTrigger } from '../ui/popup-builder';
+import { createTrigger } from '../ui/popup-builder';
+import { openTextPopup, readPopupLook } from '../ui/text-popup';
 import { popupManager } from '../ui/popup-manager';
 import {
   getSelectedText,
@@ -14,10 +14,7 @@ import {
   normalizeHostname,
   getDisabledSites,
   isSiteEnabled,
-  getPopupMode,
-  getShowCopyButton,
-  getTheme,
-  isDarkTheme
+  getPopupMode
 } from '../shared/utils';
 import { cachedSetting } from '../shared/settings-cache';
 import { startYouTubeFeatures, stopYouTubeFeatures } from '../youtube/youtube-features';
@@ -40,16 +37,6 @@ let pressX = 0;
 let pressY = 0;
 
 const readPopupMode = cachedSetting('popupMode', getPopupMode);
-const readShowCopyButton = cachedSetting('showCopyButton', getShowCopyButton);
-const readTheme = cachedSetting('theme', getTheme);
-
-/**
- * Settings that shape a popup, read once per selection
- */
-interface PopupLook {
-  showCopy: boolean;
-  dark: boolean;
-}
 
 /**
  * Get current normalized hostname
@@ -92,35 +79,17 @@ async function handleSelection(): Promise<void> {
   const mode = await readPopupMode();
   if (mode === POPUP_MODES.NONE) return;
 
-  const [showCopy, theme] = await Promise.all([readShowCopyButton(), readTheme()]);
-  const look: PopupLook = { showCopy, dark: isDarkTheme(theme) };
+  const look = await readPopupLook();
 
   if (mode === POPUP_MODES.ICON) {
     // Text and position are kept: clicking the icon may change the page's selection
-    const bar = createTrigger(selectedText, () => showPopup(selectedText, position, look), showCopy);
+    const bar = createTrigger(selectedText, () => openTextPopup(selectedText, position, look), look.showCopy);
     bar.classList.toggle(DARK_THEME_CSS_CLASS, look.dark);
     popupManager.showPopup(bar, position);
     return;
   }
 
-  showPopup(selectedText, position, look);
-}
-
-/**
- * Show popup for selected text with IPA and speech controls
- */
-function showPopup(selectedText: string, position: { x: number; y: number }, look: PopupLook): void {
-  // Show the popup right away; the translation fills in when it arrives
-  const popup = createPopup(selectedText, () => popupManager.removePopup(), look.showCopy);
-  popup.element.classList.toggle(DARK_THEME_CSS_CLASS, look.dark);
-  popupManager.showPopup(popup.element, position);
-
-  // A newer selection may have replaced this popup before a request returned
-  const isStillShown = () => popupManager.getCurrentPopup() === popup.element;
-
-  requestTranslation(selectedText).then((translation) => {
-    if (isStillShown()) popup.setTranslation(translation);
-  });
+  openTextPopup(selectedText, position, look);
 }
 
 /**
