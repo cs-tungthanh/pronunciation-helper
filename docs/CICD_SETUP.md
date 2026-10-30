@@ -222,19 +222,34 @@ Use the all-in-one Release workflow:
    - Version: `patch` / `minor` / `major`
    - Publish: `true` (or `false` for dry run)
 
-#### Option 2: Version Bump + Auto Publish
-1. Run **"Bump Version"** workflow
-2. This creates a tag
-3. Tag automatically triggers **"Publish"** workflow
+#### Option 2: Version Bump + Publish
+1. Run **"Bump Version"** workflow; it commits the bump and pushes a tag
+2. Run **"Publish to Chrome Web Store"** by hand on that tag
 
-#### Option 3: Manual Tag
+A tag pushed by a workflow does not start the Publish workflow: GitHub never triggers workflows
+from pushes made with the built-in `GITHUB_TOKEN`.
+
+#### Option 3: Push a Tag
 ```bash
-# Create tag locally
-git tag v1.0.2
-git push origin v1.0.2
-
-# This triggers publish workflow automatically
+# From a clean, up-to-date main: bump, commit, tag and push in one step (asks before pushing)
+make release              # patch: 1.2.0 → 1.2.1
+make release TYPE=minor   # 1.2.0 → 1.3.0
 ```
+
+Or by hand:
+```bash
+# Bump the version first; the tag must match manifest.json and package.json
+pnpm run version:minor
+git add manifest.json package.json
+git commit -m "chore: release v1.3.0"
+git push origin main
+
+# Pushing the tag starts the Publish workflow
+git tag v1.3.0
+git push origin v1.3.0
+```
+
+Publish fails early if the tag and the version in `manifest.json` / `package.json` differ.
 
 ### Version Management
 
