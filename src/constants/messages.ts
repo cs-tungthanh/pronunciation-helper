@@ -23,6 +23,8 @@ export const UI_LABELS = {
   NO_IPA: 'No IPA found',
   ENABLE_ON_SITE: 'Enable on this site',
   TRANSLATION_OFF: 'Off (no translation)',
+  SUGGESTED_LANGUAGES: 'Suggested',
+  OTHER_LANGUAGES: 'Other languages',
   TRIGGER_TOOLTIP: 'Show pronunciation',
   COPY_TOOLTIP: 'Copy',
   COPIED: 'Copied',

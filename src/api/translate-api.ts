@@ -11,6 +11,7 @@ import {
   MYMEMORY_MAX_CHARS,
   TRANSLATION_MAX_CHARS,
   ENGLISH_LANG,
+  AUTO_DETECT_LANG,
   VIETNAMESE_LANG,
   DICTIONARY_MAX_MEANINGS,
   TRANSLATION_CACHE_SIZE
@@ -31,7 +32,10 @@ export interface TranslationResult {
   dictionary: DictionaryEntry[];
 }
 
-type GoogleTranslation = Pick<TranslationResult, 'text' | 'dictionary'>;
+type GoogleTranslation = Pick<TranslationResult, 'text' | 'dictionary'> & {
+  /** Source language Google detected, when asked to detect it */
+  detected: string | null;
+};
 
 /** Which language to translate from and into */
 interface LanguagePair {
@@ -39,7 +43,7 @@ interface LanguagePair {
   to: string;
 }
 
-const translationCache = new PromiseCache<TranslationResult>(TRANSLATION_CACHE_SIZE);
+const translationCache = new PromiseCache<TranslationResult | null>(TRANSLATION_CACHE_SIZE);
 
 // Index into GOOGLE_TRANSLATE_CLIENTS of the client string that last answered
 let googleClientIndex = 0;
@@ -78,14 +82,24 @@ async function translateWithGoogleClient(
   const translated = segments.map((segment: unknown) => (Array.isArray(segment) && segment[0]) || '').join('');
   if (!translated) throw new Error('Google returned an empty translation');
 
-  return { text: translated, dictionary: parseGoogleDictionary(data) };
+  // data[2] is the detected source language, e.g. "fr"
+  const detected = Array.isArray(data) && typeof data[2] === 'string' ? data[2] : null;
+
+  return { text: translated, dictionary: parseGoogleDictionary(data), detected };
 }
 
 /**
- * Whether text is one word, so Google can list its meanings; a Vietnamese word may carry accents
+ * Whether text is one word, so Google can list its meanings; a non-English word may carry accents
  */
 function isSingleWord(text: string, from: string): boolean {
-  return from === VIETNAMESE_LANG ? /^[\p{L}'-]+$/u.test(text) : isValidSingleWord(text);
+  return from === ENGLISH_LANG ? isValidSingleWord(text) : /^[\p{L}'-]+$/u.test(text);
+}
+
+/**
+ * Whether two language codes name the same language, ignoring the region ("zh-CN" and "zh")
+ */
+function isSameLanguage(a: string, b: string): boolean {
+  return a.split('-')[0].toLowerCase() === b.split('-')[0].toLowerCase();
 }
 
 /**
@@ -148,14 +162,16 @@ async function translateWithMyMemory(text: string, { from, to }: LanguagePair): 
 }
 
 /**
- * Translate English text into the target language, or Vietnamese text into English, reusing
- * earlier results
+ * Translate text in any language into the target language, or Vietnamese text into English,
+ * reusing earlier results
+ * @returns The translation, or null when the text is already English and English is the target
  * @throws Error when the text is too long or every provider fails
  */
-export function translate(text: string, to: string): Promise<TranslationResult> {
+export function translate(text: string, to: string): Promise<TranslationResult | null> {
+  // Vietnamese is caught here so the common case needs no second request after detection
   const languages: LanguagePair = isVietnamese(text)
     ? { from: VIETNAMESE_LANG, to: ENGLISH_LANG }
-    : { from: ENGLISH_LANG, to };
+    : { from: AUTO_DETECT_LANG, to };
   const key = `${languages.from}|${languages.to}\n${text}`;
   return translationCache.get(key, () => translateUncached(text, languages));
 }
@@ -163,16 +179,30 @@ export function translate(text: string, to: string): Promise<TranslationResult> 
 /**
  * Translate with Google, falling back to MyMemory
  */
-async function translateUncached(text: string, languages: LanguagePair): Promise<TranslationResult> {
+async function translateUncached(text: string, languages: LanguagePair): Promise<TranslationResult | null> {
   if (text.length > TRANSLATION_MAX_CHARS) {
     throw new Error(`Text is longer than ${TRANSLATION_MAX_CHARS} characters`);
   }
 
   try {
-    return { ...(await translateWithGoogle(text, languages)), provider: 'google' };
+    let result = await translateWithGoogle(text, languages);
+
+    // Text already in the target language is translated into English instead
+    const { detected } = result;
+    if (detected && isSameLanguage(detected, languages.to)) {
+      if (isSameLanguage(detected, ENGLISH_LANG)) return null;
+      result = await translateWithGoogle(text, { from: detected, to: ENGLISH_LANG });
+    }
+
+    return { text: result.text, dictionary: result.dictionary, provider: 'google' };
   } catch (googleError) {
     console.warn('[Translate API] Google failed, falling back to MyMemory:', googleError);
   }
 
-  return { text: await translateWithMyMemory(text, languages), provider: 'mymemory', dictionary: [] };
+  // MyMemory needs a real source language; without Google's detection, guess English
+  const from = languages.from === AUTO_DETECT_LANG ? ENGLISH_LANG : languages.from;
+  if (isSameLanguage(from, languages.to)) return null;
+
+  const translated = await translateWithMyMemory(text, { from, to: languages.to });
+  return { text: translated, provider: 'mymemory', dictionary: [] };
 }

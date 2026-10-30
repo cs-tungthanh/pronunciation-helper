@@ -17,6 +17,8 @@ export const TRANSLATION_MAX_CHARS = 5000;
 // Longer selections are cut to this, so the popup stays quick to build and can still be translated
 export const SELECTION_MAX_CHARS = TRANSLATION_MAX_CHARS;
 export const ENGLISH_LANG = 'en';
+// Google's source-language value that detects the language of the text
+export const AUTO_DETECT_LANG = 'auto';
 // Selected Vietnamese text is translated into English instead of into the chosen language
 export const VIETNAMESE_LANG = 'vi';
 export const DICTIONARY_MAX_MEANINGS = 5;

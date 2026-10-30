@@ -22,7 +22,7 @@ import {
   getSpeechSpeed,
   saveSpeechSpeed
 } from '../shared/utils';
-import { getRequiredElement, onDOMReady, applyPageTheme } from '../shared/dom-helpers';
+import { getRequiredElement, onDOMReady, applyPageTheme, fillTranslationSelect } from '../shared/dom-helpers';
 import { createIcon, setButtonIcon } from '../ui/icons';
 import { ERROR_MESSAGES, UI_LABELS, THEME_CHOICES, SPEED_CHOICES } from '../constants/messages';
 import {
@@ -33,7 +33,6 @@ import {
   DictionarySite,
   Theme
 } from '../constants/app-constants';
-import { TRANSLATION_CHOICES } from '../constants/languages';
 
 /**
  * The popup-mode choices, as shown in the segmented control
@@ -202,9 +201,7 @@ async function renderSpeechSpeed(elements: PopupElements): Promise<void> {
  */
 async function renderTargetLanguage(elements: PopupElements): Promise<void> {
   const select = elements.targetLanguage;
-  TRANSLATION_CHOICES.forEach(({ code, name }) => {
-    select.appendChild(new Option(name, code));
-  });
+  fillTranslationSelect(select);
 
   select.value = await getTargetLanguage();
   select.addEventListener('change', () => saveTargetLanguage(select.value));
