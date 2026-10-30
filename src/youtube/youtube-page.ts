@@ -44,6 +44,23 @@ export function isAdShowing(): boolean {
 }
 
 /**
+ * The player's CC button, when this video has captions to turn on
+ */
+export function getCaptionsButton(): HTMLElement | null {
+  const button = document.querySelector<HTMLElement>('#movie_player .ytp-subtitles-button');
+  if (!button || button.getAttribute('aria-disabled') === 'true') return null;
+  // The player hides the button for videos without captions
+  return getComputedStyle(button).display === 'none' ? null : button;
+}
+
+/**
+ * Whether the player's captions (CC) are on
+ */
+export function isCaptionsOn(): boolean {
+  return getCaptionsButton()?.getAttribute('aria-pressed') === 'true';
+}
+
+/**
  * Whether a key event goes to something the user types in: search, comments, the chat or any field
  */
 export function isTypingEvent(event: KeyboardEvent): boolean {

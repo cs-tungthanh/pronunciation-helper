@@ -28,7 +28,19 @@ import {
   getYouTubeShortcutsEnabled,
   saveYouTubeShortcutsEnabled,
   getYouTubeAutoLoadCaptions,
-  saveYouTubeAutoLoadCaptions
+  saveYouTubeAutoLoadCaptions,
+  getYouTubeShortcutMode,
+  saveYouTubeShortcutMode,
+  getYouTubeHoverWords,
+  saveYouTubeHoverWords,
+  getYouTubeSubtitles,
+  saveYouTubeSubtitles,
+  getYouTubeSubtitleLines,
+  saveYouTubeSubtitleLines,
+  isValidYouTubeSubtitleLines,
+  getYouTubeSubtitleSize,
+  saveYouTubeSubtitleSize,
+  isValidYouTubeSubtitleSize
 } from '../shared/utils';
 import { speechService } from '../speech/speech-service';
 import { getOptionalElement, onDOMReady, applyPageTheme, fillTranslationSelect } from '../shared/dom-helpers';
@@ -41,7 +53,9 @@ import {
   Theme,
   GOOGLE_VOICE,
   AUTO_VOICE,
-  VOICE_SAMPLE_TEXT
+  VOICE_SAMPLE_TEXT,
+  YOUTUBE_SHORTCUT_MODES,
+  YouTubeShortcutMode
 } from '../constants/app-constants';
 
 /**
@@ -63,6 +77,12 @@ interface OptionsElements {
   youtubeSeekSeconds: HTMLInputElement | null;
   youtubeShortcutsEnabled: HTMLInputElement | null;
   youtubeAutoLoadCaptions: HTMLInputElement | null;
+  youtubeHoverWords: HTMLInputElement | null;
+  youtubeSubtitles: HTMLInputElement | null;
+  youtubeSubtitleLines: HTMLSelectElement | null;
+  youtubeSubtitleSize: HTMLInputElement | null;
+  youtubeShortcutMode: HTMLSelectElement | null;
+  youtubeSeekLabel: HTMLElement | null;
 }
 
 /**
@@ -84,7 +104,13 @@ function getOptionsElements(): OptionsElements {
     voicePreview: getOptionalElement<HTMLButtonElement>('voicePreview'),
     youtubeSeekSeconds: getOptionalElement<HTMLInputElement>('youtubeSeekSeconds'),
     youtubeShortcutsEnabled: getOptionalElement<HTMLInputElement>('youtubeShortcutsEnabled'),
-    youtubeAutoLoadCaptions: getOptionalElement<HTMLInputElement>('youtubeAutoLoadCaptions')
+    youtubeAutoLoadCaptions: getOptionalElement<HTMLInputElement>('youtubeAutoLoadCaptions'),
+    youtubeHoverWords: getOptionalElement<HTMLInputElement>('youtubeHoverWords'),
+    youtubeSubtitles: getOptionalElement<HTMLInputElement>('youtubeSubtitles'),
+    youtubeSubtitleLines: getOptionalElement<HTMLSelectElement>('youtubeSubtitleLines'),
+    youtubeSubtitleSize: getOptionalElement<HTMLInputElement>('youtubeSubtitleSize'),
+    youtubeShortcutMode: getOptionalElement<HTMLSelectElement>('youtubeShortcutMode'),
+    youtubeSeekLabel: getOptionalElement<HTMLElement>('youtubeSeekLabel')
   };
 }
 
@@ -255,6 +281,100 @@ async function renderYouTubeAutoLoadCaptions(elements: OptionsElements): Promise
 }
 
 /**
+ * Render the switch for Sayly's YouTube subtitles
+ */
+async function renderYouTubeSubtitles(elements: OptionsElements): Promise<void> {
+  const checkbox = elements.youtubeSubtitles;
+  if (!checkbox) {
+    return;
+  }
+
+  checkbox.checked = await getYouTubeSubtitles();
+  checkbox.addEventListener('change', () => saveYouTubeSubtitles(checkbox.checked));
+}
+
+/**
+ * Render the picker for how many sentences Sayly's subtitles show at once
+ */
+async function renderYouTubeSubtitleLines(elements: OptionsElements): Promise<void> {
+  const select = elements.youtubeSubtitleLines;
+  if (!select) {
+    return;
+  }
+
+  select.value = String(await getYouTubeSubtitleLines());
+  select.addEventListener('change', () => {
+    const lines = Number(select.value);
+    if (isValidYouTubeSubtitleLines(lines)) saveYouTubeSubtitleLines(lines);
+  });
+}
+
+/**
+ * Render the field for the text size of Sayly's subtitles, in pixels
+ */
+async function renderYouTubeSubtitleSize(elements: OptionsElements): Promise<void> {
+  const input = elements.youtubeSubtitleSize;
+  if (!input) {
+    return;
+  }
+
+  let saved = await getYouTubeSubtitleSize();
+  input.value = String(saved);
+
+  // Save each valid value as it's typed; content scripts listen for storage changes
+  input.addEventListener('input', () => {
+    const size = input.valueAsNumber;
+    if (isValidYouTubeSubtitleSize(size) && size !== saved) {
+      saved = size;
+      saveYouTubeSubtitleSize(size);
+    }
+  });
+
+  // Leaving the field with an invalid value puts back the one that's in effect
+  input.addEventListener('change', () => {
+    if (!isValidYouTubeSubtitleSize(input.valueAsNumber)) input.value = String(saved);
+  });
+}
+
+/**
+ * Render the picker for what A and D jump by; the seconds field's label follows it
+ */
+async function renderYouTubeShortcutMode(elements: OptionsElements): Promise<void> {
+  const select = elements.youtubeShortcutMode;
+  if (!select) {
+    return;
+  }
+
+  const showMode = () => {
+    if (elements.youtubeSeekLabel) {
+      elements.youtubeSeekLabel.textContent = select.value === YOUTUBE_SHORTCUT_MODES.SENTENCE
+        ? UI_LABELS.YT_SKIP_SECONDS
+        : UI_LABELS.YT_SKIP_SECONDS_ALWAYS;
+    }
+  };
+
+  select.value = await getYouTubeShortcutMode();
+  showMode();
+  select.addEventListener('change', () => {
+    showMode();
+    saveYouTubeShortcutMode(select.value as YouTubeShortcutMode);
+  });
+}
+
+/**
+ * Render the switch for hovering words in YouTube captions
+ */
+async function renderYouTubeHoverWords(elements: OptionsElements): Promise<void> {
+  const checkbox = elements.youtubeHoverWords;
+  if (!checkbox) {
+    return;
+  }
+
+  checkbox.checked = await getYouTubeHoverWords();
+  checkbox.addEventListener('change', () => saveYouTubeHoverWords(checkbox.checked));
+}
+
+/**
  * Render the field for how many seconds the YouTube shortcuts skip when there are no captions
  */
 async function renderYouTubeSeekSeconds(elements: OptionsElements): Promise<void> {
@@ -404,7 +524,12 @@ async function initOptions(): Promise<void> {
     renderTargetLanguage(elements),
     renderYouTubeSeekSeconds(elements),
     renderYouTubeShortcutsEnabled(elements),
-    renderYouTubeAutoLoadCaptions(elements)
+    renderYouTubeAutoLoadCaptions(elements),
+    renderYouTubeHoverWords(elements),
+    renderYouTubeSubtitles(elements),
+    renderYouTubeSubtitleLines(elements),
+    renderYouTubeSubtitleSize(elements),
+    renderYouTubeShortcutMode(elements)
   ]);
 }
 

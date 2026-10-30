@@ -1,12 +1,14 @@
 /**
  * Shortcuts to hear the current sentence of a YouTube video again, or move on to the next one.
- * They use the video's captions; without them they skip back or forward by the chosen number of seconds.
+ * They use the video's captions; without them, or when set to jump by seconds, they skip back or
+ * forward by the chosen number of seconds.
  */
 
 import { cachedSetting, liveSetting } from '../shared/settings-cache';
-import { getYouTubeSeekSeconds, getYouTubeShortcutsEnabled } from '../shared/utils';
+import { getYouTubeSeekSeconds, getYouTubeShortcutMode, getYouTubeShortcutsEnabled } from '../shared/utils';
 import {
   YOUTUBE_SEEK_KEYS,
+  YOUTUBE_SHORTCUT_MODES,
   SENTENCE_LEAD_MS,
   SENTENCE_RESTART_WINDOW_MS
 } from '../constants/app-constants';
@@ -16,6 +18,7 @@ import type { CaptionSentence } from './caption-sentences';
 import type { YouTubeFeature } from './youtube-features';
 
 const readSeekSeconds = cachedSetting('youtubeSeekSeconds', getYouTubeSeekSeconds);
+const readShortcutMode = cachedSetting('youtubeShortcutMode', getYouTubeShortcutMode);
 const shortcutsEnabled = liveSetting('youtubeShortcutsEnabled', getYouTubeShortcutsEnabled, true);
 
 // Times within this much count as the same moment (a seek lands near, not on, the time asked for)
@@ -77,7 +80,8 @@ function findSentence(sentences: CaptionSentence[], nowMs: number, direction: -1
 
 async function seek(video: HTMLVideoElement, direction: -1 | 1): Promise<void> {
   // An ad plays in the same video element, on its own timeline
-  const sentences = isAdShowing() ? null : await getCurrentSentences();
+  const bySentence = !isAdShowing() && await readShortcutMode() === YOUTUBE_SHORTCUT_MODES.SENTENCE;
+  const sentences = bySentence ? await getCurrentSentences() : null;
   const sentence = sentences && findSentence(sentences, video.currentTime * 1000, direction);
 
   if (sentence) {

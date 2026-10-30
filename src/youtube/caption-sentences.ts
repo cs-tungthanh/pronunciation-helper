@@ -8,10 +8,19 @@
 
 import { CAPTION_SENTENCE_GAP_MS, CAPTION_SENTENCE_MAX_MS } from '../constants/app-constants';
 
+/** A word and when it's spoken, in milliseconds from the start of the video */
+export interface CaptionWordTiming {
+  startMs: number;
+  endMs: number;
+  text: string;
+}
+
 /** A sentence and when it's spoken, in milliseconds from the start of the video */
 export interface CaptionSentence {
   startMs: number;
+  endMs: number;
   text: string;
+  words: CaptionWordTiming[];
 }
 
 /** The parts of YouTube's json3 caption format that are read here */
@@ -23,10 +32,7 @@ export interface Json3Captions {
   }>;
 }
 
-interface TimedWord {
-  startMs: number;
-  endMs: number;
-  text: string;
+interface TimedWord extends CaptionWordTiming {
   // First word of a caption line
   startsLine: boolean;
 }
@@ -83,7 +89,12 @@ export function parseCaptionSentences(captions: Json3Captions): CaptionSentence[
 
   const finish = () => {
     if (current.length > 0) {
-      sentences.push({ startMs: current[0].startMs, text: current.map(word => word.text).join(' ') });
+      sentences.push({
+        startMs: current[0].startMs,
+        endMs: current[current.length - 1].endMs,
+        text: current.map(word => word.text).join(' '),
+        words: current.map(({ startMs, endMs, text }) => ({ startMs, endMs, text }))
+      });
     }
     current = [];
   };

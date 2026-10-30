@@ -18,7 +18,16 @@ import {
   DEFAULT_VOICE,
   DEFAULT_YOUTUBE_SEEK_SECONDS,
   YOUTUBE_SEEK_MIN_SECONDS,
-  YOUTUBE_SEEK_MAX_SECONDS
+  YOUTUBE_SEEK_MAX_SECONDS,
+  YOUTUBE_SUBTITLE_MIN_LINES,
+  YOUTUBE_SUBTITLE_MAX_LINES,
+  DEFAULT_YOUTUBE_SUBTITLE_LINES,
+  YOUTUBE_SUBTITLE_MIN_SIZE,
+  YOUTUBE_SUBTITLE_MAX_SIZE,
+  DEFAULT_YOUTUBE_SUBTITLE_SIZE,
+  YOUTUBE_SHORTCUT_MODES,
+  DEFAULT_YOUTUBE_SHORTCUT_MODE,
+  type YouTubeShortcutMode
 } from '../constants/app-constants';
 import { LOG_PREFIX } from '../constants/messages';
 
@@ -300,6 +309,151 @@ export async function getYouTubeShortcutsEnabled(): Promise<boolean> {
 export async function saveYouTubeShortcutsEnabled(enabled: boolean): Promise<void> {
   try {
     await chrome.storage.local.set({ youtubeShortcutsEnabled: enabled });
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to save to storage:`, error);
+  }
+}
+
+/**
+ * Whether a value is a valid subtitle text size: a whole number of pixels within the allowed range
+ */
+export function isValidYouTubeSubtitleSize(size: unknown): size is number {
+  return Number.isInteger(size)
+    && (size as number) >= YOUTUBE_SUBTITLE_MIN_SIZE
+    && (size as number) <= YOUTUBE_SUBTITLE_MAX_SIZE;
+}
+
+/**
+ * Get the text size of Sayly's subtitles, in pixels
+ * @returns The stored size, or the default when unset or invalid
+ */
+export async function getYouTubeSubtitleSize(): Promise<number> {
+  try {
+    const { youtubeSubtitleFontSize } = await chrome.storage.local.get('youtubeSubtitleFontSize');
+    return isValidYouTubeSubtitleSize(youtubeSubtitleFontSize) ? youtubeSubtitleFontSize : DEFAULT_YOUTUBE_SUBTITLE_SIZE;
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to read storage:`, error);
+    return DEFAULT_YOUTUBE_SUBTITLE_SIZE;
+  }
+}
+
+/**
+ * Save the text size of Sayly's subtitles (callers validate with isValidYouTubeSubtitleSize)
+ */
+export async function saveYouTubeSubtitleSize(size: number): Promise<void> {
+  try {
+    await chrome.storage.local.set({ youtubeSubtitleFontSize: size });
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to save to storage:`, error);
+  }
+}
+
+/**
+ * Get whether hovering a word in YouTube captions pauses the video and shows the word's popup
+ * @returns true unless turned off
+ */
+export async function getYouTubeHoverWords(): Promise<boolean> {
+  try {
+    const { youtubeHoverWords } = await chrome.storage.local.get('youtubeHoverWords');
+    return youtubeHoverWords !== false;
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to read storage:`, error);
+    return true;
+  }
+}
+
+/**
+ * Save whether hovering caption words shows their popup
+ */
+export async function saveYouTubeHoverWords(enabled: boolean): Promise<void> {
+  try {
+    await chrome.storage.local.set({ youtubeHoverWords: enabled });
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to save to storage:`, error);
+  }
+}
+
+/**
+ * Get whether Sayly shows its own subtitles (whole sentences) in place of YouTube's captions
+ * @returns true unless turned off
+ */
+export async function getYouTubeSubtitles(): Promise<boolean> {
+  try {
+    const { youtubeSubtitles } = await chrome.storage.local.get('youtubeSubtitles');
+    return youtubeSubtitles !== false;
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to read storage:`, error);
+    return true;
+  }
+}
+
+/**
+ * Save whether Sayly shows its own subtitles
+ */
+export async function saveYouTubeSubtitles(enabled: boolean): Promise<void> {
+  try {
+    await chrome.storage.local.set({ youtubeSubtitles: enabled });
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to save to storage:`, error);
+  }
+}
+
+/**
+ * Whether a value is a valid number of subtitle sentences to show at once
+ */
+export function isValidYouTubeSubtitleLines(lines: unknown): lines is number {
+  return Number.isInteger(lines)
+    && (lines as number) >= YOUTUBE_SUBTITLE_MIN_LINES
+    && (lines as number) <= YOUTUBE_SUBTITLE_MAX_LINES;
+}
+
+/**
+ * Get how many recent sentences Sayly's subtitles show at once
+ * @returns The stored count, or the default when unset or invalid
+ */
+export async function getYouTubeSubtitleLines(): Promise<number> {
+  try {
+    const { youtubeSubtitleLines } = await chrome.storage.local.get('youtubeSubtitleLines');
+    return isValidYouTubeSubtitleLines(youtubeSubtitleLines) ? youtubeSubtitleLines : DEFAULT_YOUTUBE_SUBTITLE_LINES;
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to read storage:`, error);
+    return DEFAULT_YOUTUBE_SUBTITLE_LINES;
+  }
+}
+
+/**
+ * Save how many sentences Sayly's subtitles show (callers validate with isValidYouTubeSubtitleLines)
+ */
+export async function saveYouTubeSubtitleLines(lines: number): Promise<void> {
+  try {
+    await chrome.storage.local.set({ youtubeSubtitleLines: lines });
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to save to storage:`, error);
+  }
+}
+
+/**
+ * Get what the YouTube shortcuts (A and D) jump by: sentences or seconds
+ * @returns The stored mode, or the default when unset or invalid
+ */
+export async function getYouTubeShortcutMode(): Promise<YouTubeShortcutMode> {
+  try {
+    const { youtubeShortcutMode } = await chrome.storage.local.get('youtubeShortcutMode');
+    return Object.values(YOUTUBE_SHORTCUT_MODES).includes(youtubeShortcutMode)
+      ? youtubeShortcutMode
+      : DEFAULT_YOUTUBE_SHORTCUT_MODE;
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Failed to read storage:`, error);
+    return DEFAULT_YOUTUBE_SHORTCUT_MODE;
+  }
+}
+
+/**
+ * Save what the YouTube shortcuts jump by
+ */
+export async function saveYouTubeShortcutMode(mode: YouTubeShortcutMode): Promise<void> {
+  try {
+    await chrome.storage.local.set({ youtubeShortcutMode: mode });
   } catch (error) {
     console.error(`${LOG_PREFIX} Failed to save to storage:`, error);
   }

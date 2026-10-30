@@ -71,18 +71,46 @@
         <h2>YouTube</h2>
         <label class="setting-field">
           <input type="checkbox" id="youtubeShortcutsEnabled">
-          <span>Sentence shortcuts (A and D)</span>
+          <span>Shortcuts (A and D)</span>
         </label>
         <label class="setting-field">
-          <input type="checkbox" id="youtubeAutoLoadCaptions">
-          <span>Load captions automatically (sentence jumps work with CC off)</span>
+          <span>A and D jump by</span>
+          <select id="youtubeShortcutMode" class="setting-select">
+            <option value="sentence">Sentence</option>
+            <option value="seconds">Seconds</option>
+          </select>
         </label>
         <label class="setting-field">
-          <span>Without captions, skip by</span>
+          <span id="youtubeSeekLabel">Without captions, skip by</span>
           <input type="number" id="youtubeSeekSeconds" class="setting-number" min="1" max="60" step="1" inputmode="numeric" aria-describedby="youtubeSeekHint">
           <span>seconds</span>
         </label>
-        <p class="note" id="youtubeSeekHint">On a YouTube video, press A to hear the current sentence again (press it twice for the one before) and D to go to the next sentence. Sentences come from the video's captions, which Sayly loads by itself with them hidden (or, with that turned off, once you turn on CC); for videos without captions, A and D skip back or forward by this many seconds (1 to 60). These settings are also in the Sayly button in YouTube's player</p>
+        <p class="note" id="youtubeSeekHint">By sentence: on a YouTube video, A plays the current sentence again (press it twice for the one before) and D goes to the next sentence; for videos without captions they skip back or forward by the seconds above. By seconds: A and D always skip back or forward by the seconds above (1 to 60). These settings are also in the Sayly button in YouTube's player</p>
+        <label class="setting-field">
+          <input type="checkbox" id="youtubeAutoLoadCaptions">
+          <span>Load captions automatically (sentence jumps work with CC off; captions stay hidden)</span>
+        </label>
+        <label class="setting-field">
+          <input type="checkbox" id="youtubeSubtitles">
+          <span>Sayly subtitles (whole sentences in place of YouTube's captions, with the spoken word marked)</span>
+        </label>
+        <label class="setting-field">
+          <span>Sentences shown at once</span>
+          <select id="youtubeSubtitleLines" class="setting-select">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+          </select>
+        </label>
+        <label class="setting-field">
+          <span>Subtitle size</span>
+          <input type="number" id="youtubeSubtitleSize" class="setting-number" min="12" max="48" step="1" inputmode="numeric">
+          <span>px</span>
+        </label>
+        <label class="setting-field">
+          <input type="checkbox" id="youtubeHoverWords">
+          <span>Hover words in captions (pauses the video and shows the word's popup)</span>
+        </label>
       </section>
 
       <section class="appearance-section">

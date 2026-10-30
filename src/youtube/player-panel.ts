@@ -9,14 +9,29 @@ import {
   getYouTubeShortcutsEnabled,
   saveYouTubeShortcutsEnabled,
   getYouTubeAutoLoadCaptions,
-  saveYouTubeAutoLoadCaptions
+  getYouTubeShortcutMode,
+  saveYouTubeShortcutMode,
+  getYouTubeHoverWords,
+  saveYouTubeHoverWords,
+  getYouTubeSubtitles,
+  saveYouTubeSubtitles,
+  getYouTubeSubtitleLines,
+  saveYouTubeSubtitleLines,
+  getYouTubeSubtitleSize,
+  saveYouTubeSubtitleSize
 } from '../shared/utils';
 import { createIcon, setButtonIcon, ICONS } from '../ui/icons';
 import { UI_LABELS } from '../constants/messages';
 import {
   MESSAGE_ACTIONS,
   YOUTUBE_SEEK_MIN_SECONDS,
-  YOUTUBE_SEEK_MAX_SECONDS
+  YOUTUBE_SEEK_MAX_SECONDS,
+  YOUTUBE_SUBTITLE_MIN_LINES,
+  YOUTUBE_SUBTITLE_MAX_LINES,
+  YOUTUBE_SUBTITLE_MIN_SIZE,
+  YOUTUBE_SUBTITLE_MAX_SIZE,
+  YOUTUBE_SHORTCUT_MODES,
+  type YouTubeShortcutMode
 } from '../constants/app-constants';
 import { hasCurrentCaptions } from './caption-tracker';
 import type { YouTubeFeature } from './youtube-features';
@@ -56,15 +71,67 @@ function createSwitchRow(label: string, hint: string, checked: boolean, onChange
 }
 
 /**
- * The − 2s + stepper for how far the shortcuts skip without captions
+ * A row choosing one of a few values with a segmented control
  */
-function createSecondsRow(seconds: number): HTMLElement {
+function createChoiceRow<T extends string>(
+  label: string,
+  choices: ReadonlyArray<{ value: T; label: string }>,
+  selected: T,
+  onChange: (value: T) => void
+): HTMLElement {
   const row = document.createElement('div');
   row.className = 'elang-yt-row';
 
   const name = document.createElement('span');
   name.className = 'elang-yt-row-text';
-  name.textContent = UI_LABELS.YT_SKIP_SECONDS;
+  name.textContent = label;
+
+  const group = document.createElement('span');
+  group.className = 'elang-yt-choice';
+  group.setAttribute('role', 'radiogroup');
+  group.setAttribute('aria-label', label);
+
+  const buttons = choices.map(choice => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.setAttribute('role', 'radio');
+    button.textContent = choice.label;
+    button.addEventListener('click', () => {
+      buttons.forEach((other, i) => other.setAttribute('aria-checked', String(choices[i].value === choice.value)));
+      onChange(choice.value);
+    });
+    button.setAttribute('aria-checked', String(choice.value === selected));
+    return button;
+  });
+
+  group.append(...buttons);
+  row.append(name, group);
+  return row;
+}
+
+interface StepperOptions {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  // How much one press of − or + changes the value (1 when left out)
+  step?: number;
+  lessLabel: string;
+  moreLabel: string;
+  format: (value: number) => string;
+  onChange: (value: number) => void;
+}
+
+/**
+ * A − value + stepper row, e.g. how far the shortcuts skip without captions
+ */
+function createStepperRow({ label, value: initial, min, max, step: stepBy = 1, lessLabel, moreLabel, format, onChange }: StepperOptions): HTMLElement {
+  const row = document.createElement('div');
+  row.className = 'elang-yt-row';
+
+  const name = document.createElement('span');
+  name.className = 'elang-yt-row-text';
+  name.textContent = label;
 
   const stepper = document.createElement('span');
   stepper.className = 'elang-yt-stepper';
@@ -73,22 +140,22 @@ function createSecondsRow(seconds: number): HTMLElement {
   const less = document.createElement('button');
   const more = document.createElement('button');
   less.type = more.type = 'button';
-  setButtonIcon(less, ICONS.LESS, 18, UI_LABELS.YT_SKIP_LESS);
-  setButtonIcon(more, ICONS.MORE, 18, UI_LABELS.YT_SKIP_MORE);
+  setButtonIcon(less, ICONS.LESS, 18, lessLabel);
+  setButtonIcon(more, ICONS.MORE, 18, moreLabel);
 
-  let current = seconds;
+  let current = initial;
   const show = () => {
-    value.textContent = `${current}s`;
-    less.disabled = current <= YOUTUBE_SEEK_MIN_SECONDS;
-    more.disabled = current >= YOUTUBE_SEEK_MAX_SECONDS;
+    value.textContent = format(current);
+    less.disabled = current <= min;
+    more.disabled = current >= max;
   };
   const step = (by: number) => {
-    current = Math.min(Math.max(current + by, YOUTUBE_SEEK_MIN_SECONDS), YOUTUBE_SEEK_MAX_SECONDS);
+    current = Math.min(Math.max(current + by, min), max);
     show();
-    saveYouTubeSeekSeconds(current);
+    onChange(current);
   };
-  less.addEventListener('click', () => step(-1));
-  more.addEventListener('click', () => step(1));
+  less.addEventListener('click', () => step(-stepBy));
+  more.addEventListener('click', () => step(stepBy));
   show();
 
   stepper.append(less, value, more);
@@ -100,10 +167,15 @@ function createSecondsRow(seconds: number): HTMLElement {
  * Build the panel with the settings as they're stored now
  */
 async function createPanel(): Promise<HTMLElement> {
-  const [enabled, seconds, autoLoad] = await Promise.all([
+  const [enabled, mode, seconds, autoLoad, hoverWords, subtitlesOn, subtitleLines, subtitleSize] = await Promise.all([
     getYouTubeShortcutsEnabled(),
+    getYouTubeShortcutMode(),
     getYouTubeSeekSeconds(),
-    getYouTubeAutoLoadCaptions()
+    getYouTubeAutoLoadCaptions(),
+    getYouTubeHoverWords(),
+    getYouTubeSubtitles(),
+    getYouTubeSubtitleLines(),
+    getYouTubeSubtitleSize()
   ]);
 
   const element = document.createElement('div');
@@ -131,11 +203,68 @@ async function createPanel(): Promise<HTMLElement> {
     closePanel();
   });
 
+  const shortcutsRow = createSwitchRow(UI_LABELS.YT_SHORTCUTS, '', enabled, saveYouTubeShortcutsEnabled);
+  const secondsRow = createStepperRow({
+    label: '',
+    value: seconds,
+    min: YOUTUBE_SEEK_MIN_SECONDS,
+    max: YOUTUBE_SEEK_MAX_SECONDS,
+    lessLabel: UI_LABELS.YT_SKIP_LESS,
+    moreLabel: UI_LABELS.YT_SKIP_MORE,
+    format: value => `${value}s`,
+    onChange: saveYouTubeSeekSeconds
+  });
+  // The shortcut hint and the seconds label say what A and D do in the chosen mode
+  const showMode = (current: YouTubeShortcutMode) => {
+    const bySentence = current === YOUTUBE_SHORTCUT_MODES.SENTENCE;
+    shortcutsRow.querySelector('.elang-yt-hint')!.textContent = bySentence
+      ? UI_LABELS.YT_SHORTCUTS_SENTENCE_HINT
+      : UI_LABELS.YT_SHORTCUTS_SECONDS_HINT;
+    secondsRow.querySelector('.elang-yt-row-text')!.textContent = bySentence
+      ? UI_LABELS.YT_SKIP_SECONDS
+      : UI_LABELS.YT_SKIP_SECONDS_ALWAYS;
+  };
+  showMode(mode);
+  const modeRow = createChoiceRow(
+    UI_LABELS.YT_SHORTCUT_MODE,
+    [
+      { value: YOUTUBE_SHORTCUT_MODES.SENTENCE, label: UI_LABELS.YT_SHORTCUT_MODE_SENTENCE },
+      { value: YOUTUBE_SHORTCUT_MODES.SECONDS, label: UI_LABELS.YT_SHORTCUT_MODE_SECONDS }
+    ],
+    mode,
+    current => {
+      showMode(current);
+      saveYouTubeShortcutMode(current);
+    }
+  );
+
   element.append(
     title,
-    createSwitchRow(UI_LABELS.YT_SHORTCUTS, UI_LABELS.YT_SHORTCUTS_HINT, enabled, saveYouTubeShortcutsEnabled),
-    createSwitchRow(UI_LABELS.YT_AUTOLOAD, UI_LABELS.YT_AUTOLOAD_HINT, autoLoad, saveYouTubeAutoLoadCaptions),
-    createSecondsRow(seconds),
+    shortcutsRow,
+    modeRow,
+    secondsRow,
+    createSwitchRow(UI_LABELS.YT_SUBTITLES, UI_LABELS.YT_SUBTITLES_HINT, subtitlesOn, saveYouTubeSubtitles),
+    createStepperRow({
+      label: UI_LABELS.YT_SUBTITLE_LINES,
+      value: subtitleLines,
+      min: YOUTUBE_SUBTITLE_MIN_LINES,
+      max: YOUTUBE_SUBTITLE_MAX_LINES,
+      lessLabel: UI_LABELS.YT_SUBTITLE_LINES_LESS,
+      moreLabel: UI_LABELS.YT_SUBTITLE_LINES_MORE,
+      format: lines => String(lines),
+      onChange: saveYouTubeSubtitleLines
+    }),
+    createStepperRow({
+      label: UI_LABELS.YT_SUBTITLE_SIZE,
+      value: subtitleSize,
+      min: YOUTUBE_SUBTITLE_MIN_SIZE,
+      max: YOUTUBE_SUBTITLE_MAX_SIZE,
+      lessLabel: UI_LABELS.YT_SUBTITLE_SIZE_LESS,
+      moreLabel: UI_LABELS.YT_SUBTITLE_SIZE_MORE,
+      format: size => `${size}px`,
+      onChange: saveYouTubeSubtitleSize
+    }),
+    createSwitchRow(UI_LABELS.YT_HOVER_WORDS, UI_LABELS.YT_HOVER_WORDS_HINT, hoverWords, saveYouTubeHoverWords),
     status,
     allSettings
   );
